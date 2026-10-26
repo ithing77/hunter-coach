@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>동작 작업실</title>
+<style>
+  :root { --bg: #1d1f1a; --panel: #2a2c25; --line: #3c3f35; --ink: #f1efe8; --muted: #a9a79c; --accent: #f0b429; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  button { font-family: inherit; cursor: pointer; }
+  #app { max-width: 1180px; margin: 0 auto; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 14px; }
+  h1 { grid-column: 1 / 3; margin: 0; font-size: 20px; }
+  h1 small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .panel { background: var(--panel); border-radius: 12px; padding: 12px 14px; }
+  #stage { display: grid; place-items: center; min-height: 520px; border-radius: 10px; position: relative; }
+  #stage.grass { background: #7fae57; }
+  #stage.dark { background: #15170f; }
+  #stage.check { background: repeating-conic-gradient(#3a3d33 0 25%, #30332a 0 50%) 0 0 / 24px 24px; }
+  canvas { image-rendering: pixelated; }
+  #info { margin-top: 8px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+  #info b { color: var(--ink); }
+  #setBar { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+  .set { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 10px; padding: 4px 10px 6px 4px; display: flex; gap: 6px; align-items: center; font-size: 13.5px; font-weight: 700; }
+  .set canvas { width: 40px; height: 40px; }
+  .set.on { border-color: var(--accent); background: #4a4222; }
+  #setDesc { width: 100%; font-size: 12.5px; color: var(--muted); }
+  #warn { color: #ffcf6b; font-size: 12.5px; min-height: 18px; margin-top: 4px; }
+  .grp { margin-bottom: 12px; }
+  .grp h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .a { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 8px; padding: 8px 6px; font-size: 13.5px; text-align: center; }
+  .a small { display: block; color: var(--muted); font-size: 10.5px; margin-top: 1px; }
+  .a.on { border-color: var(--accent); background: #4a4222; }
+  .a .w { color: #8fd18b; }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
+  .row .lbl { width: 54px; color: var(--muted); }
+  .t { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .t.on { border-color: var(--accent); background: #4a4222; }
+  input[type=range] { width: 150px; }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 6px; }
+  @media (max-width: 900px) { #app { grid-template-columns: 1fr; } h1 { grid-column: 1; } #stage { min-height: 340px; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>🎬 동작 작업실 <small>LPC 생성기로 조립한 갑옷 세트와 모든 동작</small></h1>
+  <div class="panel" id="setBar" style="grid-column:1 / 3"></div>
+  <div>
+    <div class="panel">
+      <div id="stage" class="grass"><canvas id="cv"></canvas></div>
+      <div id="info"><span id="name"></span><span id="frame"></span></div>
+      <div id="warn"></div>
+    </div>
+    <div class="panel" style="margin-top:10px">
+      <div class="row"><span class="lbl">방향</span>
+        <button class="t dir" data-d="0">↑ 위</button><button class="t dir" data-d="1">← 왼쪽</button><button class="t dir on" data-d="2">↓ 아래</button><button class="t dir" data-d="3">→ 오른쪽</button>
+        <button class="t" id="all4">4방향 한꺼번에</button>
+      </div>
+      <div class="row"><span class="lbl">속도</span><input type="range" id="fps" min="1" max="24" value="10"><span id="fpsTxt"></span>
+        <button class="t on" id="loop">반복</button><button class="t" id="prev">◀ 한 칸</button><button class="t" id="play">❚❚ 멈춤</button><button class="t" id="next">한 칸 ▶</button>
+      </div>
+      <div class="row"><span class="lbl">크기</span><button class="t z" data-z="2">2배</button><button class="t z on" data-z="3">3배</button><button class="t z" data-z="4">4배</button>
+        <span class="lbl" style="margin-left:12px">바닥</span><button class="t bg on" data-b="grass">풀밭</button><button class="t bg" data-b="dark">어두움</button><button class="t bg" data-b="check">체크</button>
+      </div>
+      <div class="note">키보드: 방향키 = 방향 · 스페이스 = 멈춤/재생 · , . = 한 칸씩</div>
+    </div>
+  </div>
+  <div class="panel" id="list"></div>
+</div>
+<script>
+const GROUPS = [
+  ['기본', [['idle', '대기'], ['walk', '걷기'], ['run', '달리기'], ['combat_idle', '전투 대기'], ['jump', '점프'], ['sit', '앉기'], ['emote', '감정 표현'], ['climb', '오르기']]],
+  ['맞기', [['hurt', '맞고 쓰러지기']]],
+  ['공격 (몸 동작)', [['slash', '베기'], ['backslash', '뒤로 베기'], ['halfslash', '반 베기'], ['thrust', '찌르기'], ['spellcast', '마법 쓰기'], ['shoot', '활 쏘기']]],
+  ['대검 전용 (큰 칸)', [['slash_oversize', '대검 베기'], ['slash_reverse_oversize', '대검 올려 베기'], ['thrust_oversize', '대검 찌르기']]],
+];
+const ONE_ROW = { hurt: true, climb: true };   // 한 방향만 있는 동작
+let HID = new URLSearchParams(location.search).get('h') || 'gs', SETS = [], cache = {}, compare = false;
+const $ = id => document.getElementById(id);
+let meta, imgs = {}, cur = 'idle', dir = 2, all4 = false, fps = 10, zoom = 3, loop = true, playing = true, frame = 0, acc = 0, last = 0;
+const cv = $('cv'), cx = cv.getContext('2d');
+
+async function loadSet(id) {
+  if (cache[id]) return cache[id];
+  const m = await (await fetch(`art/showcase/${id}/showcase.json`)).json(), im = {};
+  await Promise.all(Object.keys(m).map(a => new Promise(r => { const i = new Image(); i.onload = r; i.onerror = r; i.src = `art/showcase/${id}/${a}.png`; im[a] = i; })));
+  return (cache[id] = { meta: m, imgs: im });
+}
+async function useSet(id) {
+  HID = id; const c = await loadSet(id); meta = c.meta; imgs = c.imgs;
+  for (const b of document.querySelectorAll('.set[data-s]')) b.classList.toggle('on', b.dataset.s === id && !compare);
+  const s = SETS.find(x => x.id === id);
+  $('setDesc').textContent = compare ? '모든 세트를 같은 동작·방향으로 나란히 보여 줘요. 세트를 누르면 하나만 보여요.' : `${s.name} — ${s.desc}`;
+}
+async function init() {
+  SETS = await (await fetch('art/showcase/sets.json')).json();
+  await Promise.all(SETS.map(s => loadSet(s.id)));
+  $('setBar').innerHTML = SETS.map(s => `<button class="set" data-s="${s.id}"><canvas width="64" height="64"></canvas>${s.name}</button>`).join('') + '<button class="set" id="cmpBtn">⇆ 세트 모두 비교</button><div id="setDesc"></div>';
+  for (const b of document.querySelectorAll('.set[data-s]')) {
+    const c = b.querySelector('canvas').getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(cache[b.dataset.s].imgs.idle, 0, 128, 64, 64, 0, 0, 64, 64);
+    b.onclick = async () => { compare = false; $('cmpBtn').classList.remove('on'); await useSet(b.dataset.s); pick(cur); };
+  }
+  $('cmpBtn').onclick = async () => { compare = !compare; $('cmpBtn').classList.toggle('on', compare); await useSet(HID); pick(cur); };
+  await useSet(SETS.some(s => s.id === HID) ? HID : 'gs');
+  $('list').innerHTML = GROUPS.map(([g, list]) => `<div class="grp"><h3>${g}</h3><div class="btns">${list.filter(([k]) => meta[k]).map(([k, n]) =>
+    `<button class="a" data-a="${k}">${n}<small>${meta[k].cols}칸${ONE_ROW[k] ? ' · 한 방향' : ''}${meta[k].weapon ? ' · <span class="w">칼</span>' : ''}</small></button>`).join('')}</div></div>`).join('') +
+    `<div class="note"><b>칼</b> 표시 = 무기 그림까지 있는 동작. LPC 롱소드는 걷기·맞기·대검 전용 동작에만 칼 그림이 있어요. 다른 동작은 무기를 바꾸면 생길 수 있어요.<br>사냥 데모에서 쓰는 것: 대기·걷기·달리기·전투 대기·점프(회피)·맞고 쓰러지기·대검 베기</div>`;
+  for (const b of document.querySelectorAll('.a')) b.onclick = () => pick(b.dataset.a);
+  pick('idle');
+  requestAnimationFrame(loopFn);
+}
+function pick(a) {
+  cur = a; frame = 0; acc = 0;
+  for (const b of document.querySelectorAll('.a')) b.classList.toggle('on', b.dataset.a === a);
+  const m = meta[a];
+  $('name').innerHTML = `<b>${document.querySelector(`.a[data-a="${a}"]`).firstChild.textContent}</b> · ${a} · ${m.cols}칸 · 한 칸 ${m.size}×${m.size}`;
+  $('warn').textContent = (ONE_ROW[a] ? '이 동작은 한 방향(앞모습)만 있어요. ' : '') + (!m.weapon ? '이 동작에는 칼 그림이 없어요 (맨손으로 보여요).' : '');
+  resize();
+}
+const boxOf = m => (m.size === 192 ? 160 : 96);   // 보여 줄 칸: 큰 칸은 가장자리 빈 곳을 조금 잘라 내고, 보통 칸은 둘레에 여유
+function resize() {
+  const m = meta[cur], s = boxOf(m) * zoom;
+  const n = compare ? SETS.length : (all4 && !ONE_ROW[cur] ? 4 : 1);
+  cv.width = s * n; cv.height = s;
+  cv.style.width = Math.min(cv.width, ($('stage').clientWidth - 20)) + 'px';
+}
+function draw() {
+  const m = meta[cur], img = imgs[cur], S = m.size, box = boxOf(m);
+  cx.imageSmoothingEnabled = false;
+  cx.clearRect(0, 0, cv.width, cv.height);
+  const one = ONE_ROW[cur] ? 0 : dir;
+  const cells = compare ? SETS.map(s => ({ r: one, img: cache[s.id].imgs[cur] })) : (all4 && !ONE_ROW[cur] ? [0, 1, 2, 3] : [one]).map(r => ({ r, img }));
+  cells.forEach(({ r, img }, i) => {
+    const ox = i * box * zoom, off = (box - S) / 2 * zoom;
+    cx.fillStyle = 'rgba(0,0,0,.2)';
+    const feet = off + ((S === 192 ? 64 : 0) + 59) * zoom;   // 64칸 그림에서 발은 아래쪽 59줄쯤
+    cx.beginPath(); cx.ellipse(ox + box * zoom / 2, feet, 14 * zoom, 5 * zoom, 0, 0, 7); cx.fill();
+    cx.save(); cx.beginPath(); cx.rect(ox, 0, box * zoom, box * zoom); cx.clip();
+    cx.drawImage(img, frame * S, r * S, S, S, ox + off, off, S * zoom, S * zoom);
+    cx.restore();
+  });
+  $('frame').textContent = `${frame + 1} / ${m.cols} 칸`;
+}
+function loopFn(now) {
+  const dt = Math.min(0.1, (now - last) / 1000 || 0); last = now;
+  if (meta && playing) {
+    acc += dt;
+    const m = meta[cur];
+    while (acc >= 1 / fps) {
+      acc -= 1 / fps;
+      if (frame < m.cols - 1) frame++;
+      else if (loop) frame = 0;
+      else { playing = false; $('play').textContent = '▶ 재생'; }
+    }
+  }
+  if (meta) draw();
+  requestAnimationFrame(loopFn);
+}
+function setDir(d) { dir = d; for (const b of document.querySelectorAll('.dir')) b.classList.toggle('on', +b.dataset.d === d); }
+for (const b of document.querySelectorAll('.dir')) b.onclick = () => setDir(+b.dataset.d);
+$('all4').onclick = () => { all4 = !all4; $('all4').classList.toggle('on', all4); resize(); };
+$('fps').oninput = () => { fps = +$('fps').value; $('fpsTxt').textContent = `초당 ${fps}칸`; };
+$('fps').oninput();
+$('loop').onclick = () => { loop = !loop; $('loop').classList.toggle('on', loop); if (loop && !playing) togglePlay(); };
+function togglePlay() { playing = !playing; if (playing && !loop && frame >= meta[cur].cols - 1) frame = 0; $('play').textContent = playing ? '❚❚ 멈춤' : '▶ 재생'; }
+$('play').onclick = togglePlay;
+$('prev').onclick = () => { playing = true; togglePlay(); frame = (frame - 1 + meta[cur].cols) % meta[cur].cols; };
+$('next').onclick = () => { playing = true; togglePlay(); frame = (frame + 1) % meta[cur].cols; };
+for (const b of document.querySelectorAll('.z')) b.onclick = () => { zoom = +b.dataset.z; for (const x of document.querySelectorAll('.z')) x.classList.toggle('on', x === b); resize(); };
+for (const b of document.querySelectorAll('.bg')) b.onclick = () => { $('stage').className = b.dataset.b; for (const x of document.querySelectorAll('.bg')) x.classList.toggle('on', x === b); };
+addEventListener('keydown', e => {
+  const k = { ArrowUp: 0, ArrowLeft: 1, ArrowDown: 2, ArrowRight: 3 }[e.key];
+  if (k !== undefined) { e.preventDefault(); setDir(k); }
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+  if (e.key === ',') $('prev').click();
+  if (e.key === '.') $('next').click();
+});
+addEventListener('resize', resize);
+init();
+</script>
+</body>
+</html>

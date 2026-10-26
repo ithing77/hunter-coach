@@ -1,0 +1,162 @@
+{
+ "gs": {
+  "attack": "slash_oversize",
+  "anims": {
+   "walk": {
+    "size": 64,
+    "cols": 9,
+    "rows": 4
+   },
+   "idle": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "combat": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "run": {
+    "size": 64,
+    "cols": 8,
+    "rows": 4
+   },
+   "jump": {
+    "size": 64,
+    "cols": 5,
+    "rows": 4
+   },
+   "hurt": {
+    "size": 64,
+    "cols": 6,
+    "rows": 1
+   },
+   "attack": {
+    "size": 192,
+    "cols": 6,
+    "rows": 4
+   }
+  }
+ },
+ "lance": {
+  "attack": "thrust",
+  "anims": {
+   "walk": {
+    "size": 64,
+    "cols": 9,
+    "rows": 4
+   },
+   "idle": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "combat": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "run": {
+    "size": 64,
+    "cols": 8,
+    "rows": 4
+   },
+   "jump": {
+    "size": 64,
+    "cols": 5,
+    "rows": 4
+   },
+   "hurt": {
+    "size": 64,
+    "cols": 6,
+    "rows": 1
+   },
+   "attack": {
+    "size": 64,
+    "cols": 8,
+    "rows": 4
+   }
+  }
+ },
+ "bow": {
+  "attack": "shoot",
+  "anims": {
+   "walk": {
+    "size": 64,
+    "cols": 9,
+    "rows": 4
+   },
+   "idle": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "combat": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "run": {
+    "size": 64,
+    "cols": 8,
+    "rows": 4
+   },
+   "jump": {
+    "size": 64,
+    "cols": 5,
+    "rows": 4
+   },
+   "hurt": {
+    "size": 64,
+    "cols": 6,
+    "rows": 1
+   },
+   "attack": {
+    "size": 64,
+    "cols": 13,
+    "rows": 4
+   }
+  }
+ },
+ "staff": {
+  "attack": "spellcast",
+  "anims": {
+   "walk": {
+    "size": 64,
+    "cols": 9,
+    "rows": 4
+   },
+   "idle": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "combat": {
+    "size": 64,
+    "cols": 2,
+    "rows": 4
+   },
+   "run": {
+    "size": 64,
+    "cols": 8,
+    "rows": 4
+   },
+   "jump": {
+    "size": 64,
+    "cols": 5,
+    "rows": 4
+   },
+   "hurt": {
+    "size": 64,
+    "cols": 6,
+    "rows": 1
+   },
+   "attack": {
+    "size": 64,
+    "cols": 7,
+    "rows": 4
+   }
+  }
+ }
+}

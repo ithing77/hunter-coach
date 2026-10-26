@@ -1,0 +1,44 @@
+{
+ "idle": {
+  "size": 64,
+  "cols": 2,
+  "rows": 4,
+  "weapon": false
+ },
+ "walk": {
+  "size": 64,
+  "cols": 9,
+  "rows": 4,
+  "weapon": true
+ },
+ "hurt": {
+  "size": 64,
+  "cols": 6,
+  "rows": 1,
+  "weapon": true
+ },
+ "slash": {
+  "size": 64,
+  "cols": 6,
+  "rows": 4,
+  "weapon": true
+ },
+ "thrust": {
+  "size": 64,
+  "cols": 8,
+  "rows": 4,
+  "weapon": true
+ },
+ "spellcast": {
+  "size": 64,
+  "cols": 7,
+  "rows": 4,
+  "weapon": false
+ },
+ "shoot": {
+  "size": 64,
+  "cols": 13,
+  "rows": 4,
+  "weapon": false
+ }
+}

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>탐험 작전 시험판</title>
+<style>
+  :root { --bg: #1d1f1a; --panel: #2a2c25; --line: #3c3f35; --ink: #f1efe8; --muted: #a9a79c; --accent: #f0b429; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; overflow: hidden; }
+  button { font-family: inherit; cursor: pointer; }
+  #app { height: 100vh; max-width: 1500px; margin: 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr) 240px; gap: 8px; padding: 8px; box-sizing: border-box; }
+  #top { grid-column: 1 / 3; display: flex; gap: 12px; align-items: center; background: var(--panel); border-radius: 10px; padding: 7px 12px; flex-wrap: wrap; font-size: 14px; }
+  #top b { font-size: 16px; }
+  #goal { color: var(--accent); font-weight: 700; }
+  #state { font-weight: 700; }
+  #state.fight { color: #ff7a6b; }
+  #top .sp { flex: 1; }
+  #top button { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 5px 10px; font-size: 13px; }
+  #top button.on { background: var(--accent); color: #222; border-color: var(--accent); font-weight: 900; }
+  #top label { font-size: 13px; color: var(--muted); }
+  #fieldWrap { position: relative; min-height: 0; border-radius: 10px; overflow: hidden; }
+  #field { width: 100%; height: 100%; display: block; cursor: crosshair; image-rendering: pixelated; }
+  #side { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  #mini { width: 100%; image-rendering: pixelated; border-radius: 8px; background: #0b0c0a; }
+  #log { background: var(--panel); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; flex: 1; overflow: hidden; }
+  #log div { padding: 3px 0; border-bottom: 1px solid var(--line); }
+  #log .good { color: #8dd18b; } #log .bad { color: #ff8a78; } #log .warn { color: #ffcf6b; } #log .card { color: #9cc7ff; }
+  #bottom { grid-column: 1 / 3; display: grid; grid-template-columns: 220px 190px minmax(0, 1fr); gap: 10px; align-items: end; }
+  #heroes { display: flex; flex-direction: column; gap: 6px; }
+  .hero { background: var(--panel); border-radius: 10px; padding: 5px 8px; display: flex; gap: 8px; align-items: center; }
+  .hero canvas { width: 44px; height: 44px; background: #3a3d33; border-radius: 8px; image-rendering: pixelated; }
+  .hero > div { flex: 1; }
+  .hn { font-weight: 700; font-size: 13px; }
+  .hs { font-size: 11px; color: var(--muted); }
+  .hero.down { opacity: .45; }
+  .bar { height: 7px; background: #111; border-radius: 4px; overflow: hidden; margin-top: 3px; }
+  .bar i { display: block; height: 100%; transition: width .2s; }
+  #slotBox { background: #26231b; border: 2px dashed #6b5d2a; border-radius: 12px; padding: 6px; text-align: center; }
+  #slotBox.hot { border-color: var(--accent); background: #3a3420; }
+  #slotBox .lbl { font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+  #hand { display: flex; gap: 8px; align-items: end; }
+  .tc { width: 118px; height: 150px; flex: none; background: #f4ecd8; color: #2b2418; border-radius: 9px; border: 3px solid var(--cc); box-shadow: 0 3px 8px rgba(0,0,0,.4); cursor: grab; user-select: none; touch-action: none; transition: transform .12s; overflow: hidden; }
+  .tc:hover { transform: translateY(-8px); }
+  .tc.used { opacity: .45; transform: none; }
+  .tc.big { width: 160px; height: 150px; cursor: default; }
+  .tc.big:hover { transform: none; }
+  .tc-top { background: var(--cc); color: #fff; font-weight: 900; font-size: 14px; padding: 5px 6px; display: flex; gap: 5px; align-items: center; }
+  .tc-ic { font-size: 16px; }
+  .tc-body { padding: 6px 7px; font-size: 11.5px; line-height: 1.5; text-align: left; }
+  .ghost { position: fixed; z-index: 50; pointer-events: none; transform: rotate(-4deg) scale(1.05); opacity: .95; }
+  .pause { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: rgba(24,25,20,.95); border: 2px solid #ff6a4a; border-radius: 12px; padding: 12px 18px; min-width: 360px; box-shadow: 0 8px 30px rgba(0,0,0,.5); text-align: center; }
+  .pause.discover { border-color: var(--accent); }
+  .pause.critical { border-color: #e5533d; }
+  #pTitle { font-size: 20px; font-weight: 900; }
+  #pLines { margin: 6px 0; font-size: 15px; color: #ffcf6b; font-weight: 700; }
+  #pHint { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+  #goBtn { background: var(--accent); color: #222; border: 0; border-radius: 8px; padding: 9px 22px; font-weight: 900; font-size: 15px; }
+  .pause .small { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+  .screen { position: fixed; inset: 0; background: rgba(10,11,9,.8); display: grid; place-items: center; z-index: 40; }
+  .box { background: var(--panel); border-radius: 16px; padding: 24px 30px; text-align: center; min-width: 320px; }
+  .box h1 { margin: 0 0 6px; }
+  .box button { margin-top: 14px; background: var(--accent); color: #222; border: 0; border-radius: 10px; padding: 10px 24px; font-weight: 900; font-size: 15px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <b>🗺 탐험 작전 시험판</b>
+    <span id="goal"></span>
+    <span id="state"></span>
+    <span class="sp"></span>
+    <button id="autoBtn" title="E">🧭 알아서 탐험</button>
+    <button id="pauseBtn" title="스페이스">⏸ 멈춤</button>
+    <button data-speed="1" class="on">1배</button><button data-speed="2">2배</button>
+    <label><input type="checkbox" id="critToggle" checked> 동료 위기 때 멈춤</label>
+    <a href="art/CREDITS.txt" target="_blank" style="color:#a9a79c;font-size:12px">그림 제작자(LPC)</a>
+  </div>
+  <div id="fieldWrap">
+    <canvas id="field"></canvas>
+    <div id="pause" class="pause" style="display:none">
+      <div id="pTitle"></div>
+      <div id="pLines"></div>
+      <div id="pHint"></div>
+      <button id="goBtn">작전 시작 ▶ (Enter)</button>
+      <div class="small">아래 손패에서 카드를 위 칸으로 끌어 올리거나 눌러서 작전을 고르세요 (숫자 1~5)</div>
+    </div>
+  </div>
+  <div id="side">
+    <canvas id="mini" width="224" height="147"></canvas>
+    <div id="log"></div>
+  </div>
+  <div id="bottom">
+    <div id="heroes"></div>
+    <div id="slotBox"><div class="lbl">▼ 지금 작전 ▼</div><div id="slot"></div></div>
+    <div id="hand"></div>
+  </div>
+</div>
+<div class="screen" id="endScreen" style="display:none"><div class="box"><h1 id="endTitle"></h1><div id="endSub"></div><button id="againBtn">다시 하기</button></div></div>
+<script src="explore/data.js"></script>
+<script src="explore/world.js"></script>
+<script src="explore/sim.js"></script>
+<script src="explore/view.js"></script>
+<script src="explore/main.js"></script>
+</body>
+</html>
