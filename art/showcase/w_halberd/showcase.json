@@ -100,5 +100,12 @@
   "cols": 8,
   "rows": 4,
   "weapon": true
+ },
+ "slash_reverse_oversize": {
+  "size": 192,
+  "cols": 6,
+  "rows": 4,
+  "weapon": true,
+  "auto": true
  }
 }

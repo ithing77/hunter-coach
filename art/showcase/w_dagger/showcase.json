@@ -88,5 +88,26 @@
   "cols": 13,
   "rows": 4,
   "weapon": false
+ },
+ "slash_oversize": {
+  "size": 192,
+  "cols": 6,
+  "rows": 4,
+  "weapon": true,
+  "auto": true
+ },
+ "slash_reverse_oversize": {
+  "size": 192,
+  "cols": 6,
+  "rows": 4,
+  "weapon": true,
+  "auto": true
+ },
+ "thrust_oversize": {
+  "size": 192,
+  "cols": 8,
+  "rows": 4,
+  "weapon": true,
+  "auto": true
  }
 }

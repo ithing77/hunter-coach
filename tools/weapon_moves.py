@@ -53,29 +53,58 @@ def opaque(im):
 
 
 def upright(k):
-    """그 무기의 모든 그림 칸 중 가장 길고 곧게 보이는 칸을 골라, 끝이 위로 서게 돌린 그림"""
-    best = None
+    """그 무기의 모든 그림 칸 중 가장 길고 곧게 보이는 칸을 골라, 끝이 위로 서게 돌린 그림.
+    똑바로 놓인 칸이 없으면 기울기 허용을 넓혀 가며 찾는다"""
+    # 걷기 칸(무기를 그냥 든 모습, 잔상 없음)에서 먼저 찾고, 없으면 다른 동작에서. 뭉툭한 무기는 마지막에 잔상 거르기 없이
+    for walk, tol, dense in ((1, 4, 5), (1, 12, 5), (1, 45, 6), (0, 4, 5), (0, 12, 5), (0, 45, 5)):
+        best = pick_cell(k, tol, dense * (1.6 if WL[k][1] == '둔기' else 1), walk)   # 도끼·메이스는 머리가 넓어 점이 많음
+        if best:
+            return finish(k, best)
+    return None   # 잔상 없이 무기만 그려진 칸이 없음 (곤봉 등) → 만들지 않음
+
+
+def sheets_of(k):
+    """동작마다 무기 층(앞·뒤)을 합친 그림. 삼지창·낫처럼 앞층·뒷층으로 나뉜 무기도 한 장으로"""
+    out = {}
     for l in weapon_layers(k):
-        anims = [l['custom']] if l['custom'] else ['walk', 'slash', 'thrust']   # 맞기(hurt)는 무기가 떨어져 조각나 있어 뺌
-        for anim in anims:
+        for anim in ([l['custom']] if l['custom'] else ['walk', 'slash', 'thrust']):   # 맞기(hurt)는 무기가 조각나 있어 뺌
             f = B.file_for(l, anim)
             if not f:
                 continue
             im = Image.open(f).convert('RGBA')
-            Z = 192 if 'oversize' in anim else 128 if '128' in anim else 64
-            for r in range(im.size[1] // Z):
-                for c in range(im.size[0] // Z):
-                    cell = im.crop((c * Z, r * Z, c * Z + Z, r * Z + Z))
-                    pts = opaque(cell)
-                    if len(pts) < 12:
-                        continue
-                    ctr, u, lo, hi, w = pca(pts)
-                    ang = math.degrees(math.atan2(u[1], u[0])) % 90
-                    if min(ang, 90 - ang) > 4:   # 똑바로 가로·세로로 놓인 칸만 (비스듬한 칸을 돌리면 칼날이 톱니처럼 깨짐)
-                        continue
-                    score = (hi - lo) - 1.5 * w   # 길고 가늘수록
-                    if not best or score > best[0]:
-                        best = (score, cell, ctr, u, lo, hi, Z, f'{anim} {r},{c}')
+            if anim in out and out[anim].size == im.size:
+                out[anim].alpha_composite(im)
+            elif anim not in out:
+                out[anim] = im
+    return out
+
+
+def pick_cell(k, tol, dense, walk_only):
+    best = None
+    for anim, im in sheets_of(k).items():
+        if walk_only and not anim.startswith('walk'):
+            continue
+        Z = 192 if 'oversize' in anim else 128 if '128' in anim else 64
+        for r in range(im.size[1] // Z):
+            for c in range(im.size[0] // Z):
+                cell = im.crop((c * Z, r * Z, c * Z + Z, r * Z + Z))
+                pts = opaque(cell)
+                if len(pts) < 12:
+                    continue
+                ctr, u, lo, hi, w = pca(pts)
+                ang = math.degrees(math.atan2(u[1], u[0])) % 90
+                if min(ang, 90 - ang) > tol:   # 똑바로 가로·세로로 놓인 칸만 (비스듬한 칸을 돌리면 칼날이 톱니처럼 깨짐)
+                    continue
+                dens = len(pts) / max(1, hi - lo)
+                if dens > dense:   # 휘두름 잔상이 낀 칸 (길이에 비해 점이 너무 많음)
+                    continue
+                score = (hi - lo) - 1.5 * w - 3 * max(0, dens - 3)   # 길고 가늘수록, 잔상이 적을수록
+                if not best or score > best[0]:
+                    best = (score, cell, ctr, u, lo, hi, Z, f'{anim} {r},{c}')
+    return best
+
+
+def finish(k, best):
     _, cell, (mx, my), (ux, uy), lo, hi, Z, where = best
     # 끝 쪽 = 쇠(회색·푸른빛, 칼날·도끼날·창끝)가 모인 쪽, 반대쪽이 손잡이
     px = cell.load()
@@ -169,6 +198,8 @@ def main():
     ref = max(t['len'] for tpl, _, _ in tpls.values() for row in tpl for t in row if t and not t['smear'])
     for k in ids:
         wimg = upright(k)
+        if wimg is None:
+            print(f'  {k}: 무기만 깨끗이 그려진 칸이 없어 건너뜀'); continue
         frac = GRIP.get(WL[k][1], 0.15)
         for move, (tpl, cols, rows) in tpls.items():
             fr = Image.new('RGBA', (cols * 192, rows * 192)); bk = Image.new('RGBA', (cols * 192, rows * 192))
