@@ -6,8 +6,10 @@ const unitv = (x, y) => { const l = hyp(x, y) || 1; return { x: x / l, y: y / l 
 const dist = (a, b) => hyp(a.x - b.x, a.y - b.y);
 const faceOf = (dx, dy) => (Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 3 : 1) : (dy > 0 ? 2 : 0));   // LPC 줄: 위0 왼1 아래2 오른3
 const alive = u => u.state !== 'down' && u.state !== 'dead';
-const liveHeroes = G => G.units.filter(u => u.team === 'h' && alive(u));
-const liveFoes = G => G.units.filter(u => u.team === 'e' && alive(u));
+// 편(team): 'h' = 왼편, 'e' = 오른편. 머리: 역할(role)이 있으면 헌터 머리(ai.js), 없으면 몬스터 머리(enemyTick).
+//   G.me = 지금 생각하는 유닛의 편. liveHeroes = 내 편, liveFoes = 상대 편 (헌터 머리 기준 이름).
+const liveHeroes = G => G.units.filter(u => u.team === (G.me || 'h') && alive(u));
+const liveFoes = G => G.units.filter(u => u.team !== (G.me || 'h') && alive(u));
 const nearest = (p, list, f) => { let b = null, bd = 1e9; for (const u of list) { if (f && !f(u)) continue; const d = dist(u, p); if (d < bd) { bd = d; b = u; } } return b; };
 const centroid = list => ({ x: list.reduce((a, u) => a + u.x, 0) / list.length, y: list.reduce((a, u) => a + u.y, 0) / list.length });
 const inArena = p => ({ x: clamp(p.x, 0.6, ARENA.w - 0.6), y: clamp(p.y, 0.6, ARENA.h - 0.6) });
@@ -26,22 +28,34 @@ function mergeStyle(id) {
   };
 }
 
-function newBattle(scn, styleId, seed) {
+// setup = 직접 배치 (테스트 아레나): { h: [{ kind, x, y }], e: [...], styleE } — 없으면 SCENARIOS[scn]
+function newBattle(scn, styleId, seed, setup) {
   const rng = rngOf(seed);
-  const G = { t: 0, rng, seed, scn, style: mergeStyle(styleId), units: [], shots: [], fx: [], warns: [], log: [], phase: 'play',
+  const G = { t: 0, rng, seed, scn, custom: !!setup, me: 'h', styles: { h: mergeStyle(styleId), e: mergeStyle(setup && setup.styleE || styleId) },
+    units: [], shots: [], fx: [], warns: [], log: [], phase: 'play',
     stats: { dmgTaken: {}, healDone: 0, overheal: 0, dmgDone: 0, overkill: 0, slamIn: 0, slamHit: 0, switches: 0, flips: 0, tankT: 0, meleeT: 0, deaths: 0, end: 0 } };
+  // 메모판·성향은 편마다 따로. G.board / G.style 은 지금 편(G.me)의 것
+  G.boards = { h: makeBoard(G), e: makeBoard(G) };
+  Object.defineProperty(G, 'board', { get() { return this.boards[this.me || 'h']; } });
+  Object.defineProperty(G, 'style', { get() { return this.styles[this.me || 'h']; } });
   let id = 0;
-  const cnt = {};
+  const cnt = {}, total = {};
   const mk = (kind, team, x, y) => {
     const d = UNITS[kind];
-    cnt[kind] = (cnt[kind] || 0) + 1;
+    cnt[team + kind] = (cnt[team + kind] || 0) + 1;
     const u = { id: id++, kind, d, team, x, y, hp: d.hp, max: d.hp, mana: d.mana || 0, state: 'idle', atkCd: rng() * 0.5, atkT: 0, face: team === 'h' ? 3 : 1,
       animT: rng() * 2, moving: false, walkT: 0, cd: {}, threat: new Map(), target: null, why: '', pickT: 0, forcedT: 0, blockT: 0,
       thinkT: rng() * 0.2, plan: null, thought: null, say: '', sayT: 0, lastDir: null, lastDirT: -9, tgt: null, tgtSince: 0, spot: null, expAdj: {} };
-    u.label = team === 'h' || SCENARIOS[scn].units.filter(k => k === kind).length < 2 ? d.name : d.name + cnt[kind];
+    u.label = (total[team + kind] || 1) < 2 ? d.name : d.name + cnt[team + kind];
     if (team === 'h') G.stats.dmgTaken[kind] = 0;
     G.units.push(u); return u;
   };
+  if (setup) {
+    for (const t of ['h', 'e']) for (const p of setup[t]) total[t + p.kind] = (total[t + p.kind] || 0) + 1;
+    for (const t of ['h', 'e']) for (const p of setup[t]) mk(p.kind, t, p.x, p.y);
+    return G;
+  }
+  for (const k of SCENARIOS[scn].units) total['e' + k] = (total['e' + k] || 0) + 1;
   PARTY.forEach((k, i) => { const p = PARTY_SPOTS[i]; mk(k, 'h', p[0] + (rng() - 0.5) * 1.5, p[1] + (rng() - 0.5) * 1.5); });
   const list = SCENARIOS[scn].units;
   list.forEach((k, i) => {
@@ -49,7 +63,6 @@ function newBattle(scn, styleId, seed) {
     const y = big ? 8 : 2.5 + (i + 0.5) / list.length * 11;
     mk(k, 'e', (big ? 20 : 19.5 + rng() * 3) + (rng() - 0.5), y + (rng() - 0.5) * 1.5);
   });
-  G.board = makeBoard(G);
   return G;
 }
 
@@ -57,11 +70,13 @@ function newBattle(scn, styleId, seed) {
 function step(G, dt) {
   if (G.phase !== 'play') return;
   G.t += dt;
+  G.me = 'h';
   if (!liveFoes(G).length) return endBattle(G, 'won');
   if (!liveHeroes(G).length) return endBattle(G, 'lost');
   if (G.t >= TIME_LIMIT) return endBattle(G, 'timeout');
-  updateBoard(G, dt);
+  for (const side of ['h', 'e']) if (G.units.some(u => u.team === side && u.d.role)) { G.me = side; updateBoard(G, dt); }
   for (const u of G.units) {
+    G.me = u.team;
     u.animT += dt; u.walkT = Math.max(0, u.walkT - dt); u.sayT -= dt;
     if (!alive(u)) { u.deadT = (u.deadT || 0) + dt; continue; }
     u.atkCd -= dt; u.blockT -= dt; u.forcedT -= dt;
@@ -70,8 +85,9 @@ function step(G, dt) {
     if (u.state === 'attack') { attackTick(G, u, dt); continue; }
     if (u.state === 'cast') { castTick(G, u, dt); continue; }
     if (u.state === 'slam') continue;
-    if (u.team === 'h') heroTick(G, u, dt); else enemyTick(G, u, dt);
+    if (u.d.role) heroTick(G, u, dt); else enemyTick(G, u, dt);
   }
+  G.me = 'h';
   separate(G);
   shotsStep(G, dt);
   warnsStep(G, dt);
@@ -88,6 +104,9 @@ function heroTick(G, u, dt) {
   const stale = !p || (p.target && !alive(p.target)) || (p.kind === 'skill' && !skillReady(u, p.skill));
   if (u.thinkT <= 0 || stale) { think(G, u); u.thinkT = THINK_EVERY[0] + G.rng() * (THINK_EVERY[1] - THINK_EVERY[0]); }
   execute(G, u, dt);
+  // 상대 편 헌터 머리가 보는 "이 헌터가 노리는 적" (헌터끼리 싸울 때 위험도 계산용)
+  const q = u.plan;
+  u.target = q && q.target && q.target.team !== u.team ? q.target : null;
 }
 function execute(G, u, dt) {
   const p = u.plan;
@@ -116,7 +135,7 @@ const skillReady = (u, k) => (u.cd[k] || 0) <= 0 && (!SKILLS[k].mana || u.mana >
 
 // ---------- 적 ----------
 function enemyTick(G, u, dt) {
-  const hs = liveHeroes(G);
+  const hs = liveFoes(G);   // 몬스터 머리: 상대 편 전부가 표적 후보
   for (const h of hs) { const d = dist(u, h); if (d < 4) addThreat(u, h, (4 - d) * 1.5 * dt); }   // 가까운 헌터에게 조금씩 신경이 간다
   u.pickT -= dt;
   if (u.pickT <= 0 || !u.target || !alive(u.target)) { u.pickT = 0.3; pickTarget(G, u, hs); }
@@ -127,7 +146,7 @@ function enemyTick(G, u, dt) {
     const s = SKILLS.slam;
     u.cd.slam = s.cd; u.state = 'slam'; u.animT = 0; u.face = faceOf(t.x - u.x, t.y - u.y);
     const w = { x: t.x, y: t.y, r: s.radius, T: 0, warn: s.warn, by: u, dmg: s.dmg, done: false, inside: [] };
-    w.inside = liveHeroes(G).filter(h => dist(h, w) < w.r).map(h => h.id);
+    w.inside = liveFoes(G).filter(h => dist(h, w) < w.r).map(h => h.id);
     G.stats.slamIn += w.inside.length;
     G.warns.push(w);
     return;
@@ -217,13 +236,14 @@ function dealDamage(G, from, t, base) {
   let dmg = base * (1 - t.d.armor) * (0.85 + G.rng() * 0.3);
   if (t.blockT > 0) dmg *= 1 - SKILLS.block.reduce;
   dmg = Math.max(1, Math.round(dmg));
-  if (t.team === 'e') { G.stats.dmgDone += dmg; G.stats.overkill += Math.max(0, dmg - t.hp); addThreat(t, from, dmg * (from.d.role === 'tank' ? 4 : 1)); }
+  if (!t.d.role) addThreat(t, from, dmg * (from.d.role === 'tank' ? 4 : 1));
+  if (t.team === 'e') { G.stats.dmgDone += dmg; G.stats.overkill += Math.max(0, dmg - t.hp); }
   else G.stats.dmgTaken[t.kind] += Math.min(dmg, t.hp);
   t.hp -= dmg;
   G.fx.push({ kind: 'num', x: t.x, y: t.y - 1.2, text: String(dmg), color: t.team === 'h' ? '#ff7a6b' : '#ffffff', t: 0, life: 0.9 });
   if (t.hp <= 0) {
     t.hp = 0; t.animT = 0;
-    if (t.team === 'h') { t.state = 'down'; G.stats.deaths++; G.log.push({ t: G.t, id: t.id, name: t.d.name, text: '쓰러짐', why: '', bad: true }); }
+    if (t.d.role) { t.state = 'down'; if (t.team === 'h') G.stats.deaths++; G.log.push({ t: G.t, id: t.id, name: t.label, text: '쓰러짐', why: '', bad: true }); }
     else t.state = 'dead';
   }
 }
@@ -248,13 +268,15 @@ function warnsStep(G, dt) {
     w.T += dt;
     if (!w.done && w.T >= w.warn) {
       w.done = true;
-      for (const h of liveHeroes(G)) if (dist(h, w) < w.r) { dealDamage(G, w.by, h, w.dmg); if (w.inside.includes(h.id)) G.stats.slamHit++; }
+      G.me = w.by.team;
+      for (const h of liveFoes(G)) if (dist(h, w) < w.r) { dealDamage(G, w.by, h, w.dmg); if (w.inside.includes(h.id)) G.stats.slamHit++; }
       if (w.by.state === 'slam') { w.by.state = 'idle'; w.by.atkCd = 0.8; }
       G.fx.push({ kind: 'ring', x: w.x, y: w.y, r: w.r, color: '#ff5a3a', t: 0, life: 0.4 });
     }
   }
+  G.me = 'h';
   G.warns = G.warns.filter(w => w.T < w.warn + 0.4);
-  for (const e of liveFoes(G)) if (e.state === 'slam' && !G.warns.some(w => w.by === e && !w.done)) e.state = 'idle';
+  for (const e of G.units.filter(alive)) if (e.state === 'slam' && !G.warns.some(w => w.by === e && !w.done)) e.state = 'idle';
 }
 
 // ---------- 이동 ----------
@@ -301,8 +323,8 @@ function summarize(G) {
     overkillPct: S.dmgDone ? S.overkill / S.dmgDone : 0, flipPerMin: S.flips / min,
   };
 }
-function runOne(scn, style, seed) {
-  const G = newBattle(scn, style, seed);
+function runOne(scn, style, seed, setup) {
+  const G = newBattle(scn, style, seed, setup);
   while (G.phase === 'play') step(G, STEP);
   return summarize(G);
 }

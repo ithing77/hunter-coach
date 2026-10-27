@@ -9,11 +9,12 @@ function makeBoard(G) {
   return { phase: 'gather', phaseT: 0, why: '시작', focus: null, focusWhy: '', focusT: 0, tankHeld: [], backThreat: [], low: [],
     healClaims: new Map(), pending: new Map(), regroup: null, updT: 0, calmT: 0, retreated: false, fwd: { x: 1, y: 0 } };
 }
+const partyName = G => (G.custom ? (G.me === 'e' ? '오른편' : '왼편') : '파티');
 function setPhase(G, ph, why) {
   const B = G.board;
   if (B.phase === ph) return;
   B.phase = ph; B.phaseT = 0; B.why = why; B.calmT = 0;
-  G.log.push({ t: G.t, id: -1, name: '파티', text: `국면 → ${PHASE_NAMES[ph]}`, why, phase: true });
+  G.log.push({ t: G.t, id: -1, name: partyName(G), text: `국면 → ${PHASE_NAMES[ph]}`, why, phase: true });
 }
 
 function updateBoard(G, dt) {
@@ -22,7 +23,7 @@ function updateBoard(G, dt) {
   // 피해 예약 (매 틱): 날아가는 화살 + 휘두르는 중인 공격 + 조준 중인 사격
   B.pending.clear();
   const addP = (e, v) => B.pending.set(e.id, (B.pending.get(e.id) || 0) + v * (1 - e.d.armor));
-  for (const s of G.shots) if (s.from.team === 'h') addP(s.t, s.dmg);
+  for (const s of G.shots) if (s.from.team === G.me) addP(s.t, s.dmg);
   for (const h of liveHeroes(G)) {
     if (h.state === 'attack' && !h.hitDone && h.atkTarget) addP(h.atkTarget, h.d.atk);
     if (h.state === 'cast' && h.cast.k === 'aimed' && h.cast.t) addP(h.cast.t, h.d.atk * SKILLS.aimed.mult);
@@ -46,12 +47,12 @@ function updateBoard(G, dt) {
     if (B.backThreat.length) { f = B.backThreat.slice().sort((a, b) => a.hp - b.hp)[0]; why = `뒷줄(${f.target.d.name})을 치는 적`; }
     else if (tank && tank.tgt && alive(tank.tgt)) { f = tank.tgt; why = '기사가 잡고 있는 적'; }
     else { f = es.slice().sort((a, b) => a.hp - b.hp)[0]; why = '체력이 제일 적은 적'; }
-    if (f !== B.focus) { B.focusT = 2; if (B.focus) G.log.push({ t: G.t, id: -1, name: '파티', text: `집중 표적 → ${f.label}`, why }); }
+    if (f !== B.focus) { B.focusT = 2; if (B.focus) G.log.push({ t: G.t, id: -1, name: partyName(G), text: `집중 표적 → ${f.label}`, why }); }
     B.focus = f; B.focusWhy = why;
   }
   // 국면
   const minD = Math.min(...es.map(e => Math.min(...hs.map(h => dist(e, h)))));
-  const all = G.units.filter(u => u.team === 'h');
+  const all = G.units.filter(u => u.team === G.me);
   const avg = all.reduce((a, h) => a + h.hp, 0) / all.reduce((a, h) => a + h.max, 0);
   const foeHp = es.reduce((a, e) => a + e.hp, 0), partyHp = hs.reduce((a, h) => a + h.hp, 0);
   const wantRetreat = S.board.retreatHp > 0 && !B.retreated && avg < S.board.retreatHp && foeHp > partyHp * 0.5;
@@ -108,7 +109,7 @@ function think(G, u) {
   const prev = u.plan && u.plan.label;
   u.plan = pick.plan ? { ...pick.plan, label: pick.label } : null;
   if (pick.label !== prev) {
-    G.log.push({ t: G.t, id: u.id, name: u.d.name, text: pick.label, why: pick.why, tag: th.tiers.length ? th.tiers[th.tiers.length - 1].tag : '' });
+    G.log.push({ t: G.t, id: u.id, name: u.label, text: pick.label, why: pick.why, tag: th.tiers.length ? th.tiers[th.tiers.length - 1].tag : '' });
     u.say = pick.short || pick.label; u.sayT = 1.6;
     if (G.log.length > 800) G.log.splice(0, 200);
   }

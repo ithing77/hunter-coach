@@ -25,6 +25,17 @@
   .hero { background: var(--panel); border-radius: 10px; padding: 5px 8px; display: flex; gap: 8px; align-items: center; cursor: pointer; border: 2px solid transparent; }
   .hero.sel { border-color: #ffe27a; }
   .hero.down { opacity: .45; }
+  .hero.sideE { box-shadow: inset 4px 0 0 #ff8a78; } .hero.sideH { box-shadow: inset 4px 0 0 #7fd4ff; }
+  #heroes.many { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); max-height: 30vh; overflow: auto; }
+  #heroes.setupMode { display: block; background: var(--panel); border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+  .setupMode .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 3px 0; }
+  .setupMode button { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 4px 9px; font-size: 13px; }
+  .setupMode button.on { background: var(--accent); color: #222; border-color: var(--accent); font-weight: 900; }
+  .setupMode button.side.on[data-side=h] { background: #7fd4ff; border-color: #7fd4ff; }
+  .setupMode button.side.on[data-side=e] { background: #ff8a78; border-color: #ff8a78; }
+  .setupMode .pal button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 6px; min-width: 58px; }
+  .setupMode .pal canvas { width: 36px; height: 36px; image-rendering: pixelated; }
+  .setupMode #goBtn { background: var(--good); color: #222; font-weight: 900; border: 0; padding: 6px 16px; }
   .hero canvas { width: 40px; height: 40px; background: #3a3d33; border-radius: 8px; image-rendering: pixelated; flex: none; }
   .hero > div { flex: 1; min-width: 0; }
   .hn { font-weight: 700; font-size: 13px; }
@@ -90,11 +101,13 @@
   <div id="top">
     <b>⚔ 파티 AI 전투장</b>
     <select id="scn" title="상황"></select>
-    <select id="style" title="성향 (감독 손잡이)"></select>
+    <select id="style" title="성향 (감독 손잡이) — 직접 배치에선 왼편 성향"></select>
+    <select id="styleE" title="오른편 성향" style="display:none"></select>
     <label>판 번호 <input type="number" id="seed" value="1000"></label>
     <button id="diceBtn" title="다른 판">🎲</button>
     <label>보기 <select id="zoom"><option value="1">100%</option><option value="0.7" selected>70%</option><option value="0.6">60%</option></select></label>
     <button id="resetBtn" title="R">↺ 다시</button>
+    <button id="editBtn" style="display:none">✎ 배치 고치기</button>
     <span class="sp"></span>
     <span id="phase"></span>
     <span id="clock"></span>

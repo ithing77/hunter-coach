@@ -55,12 +55,12 @@ const View = (() => {
     if (opt.lines) {
       for (const u of G.units) {
         if (!alive(u)) continue;
-        const t = u.team === 'h' ? (u.plan && u.plan.target !== u ? u.plan.target : null) : u.target;
+        const t = u.d.role ? (u.plan && u.plan.target !== u ? u.plan.target : null) : u.target;
         if (!t || !alive(t)) continue;
-        const isSel = sel && (u === sel || t === sel);
-        if (!isSel && u.team === 'h' && t.team === 'h' && !(u.plan && u.plan.kind === 'skill')) continue;
+        const isSel = sel && (u === sel || t === sel), ally = t.team === u.team;
+        if (!isSel && u.d.role && ally && !(u.plan && u.plan.kind === 'skill')) continue;
         const p = P(u.x, u.y - 0.4), q = P(t.x, t.y - 0.4);
-        cx.strokeStyle = u.team === 'h' ? (t.team === 'h' ? 'rgba(123,227,123,.8)' : 'rgba(127,212,255,.55)') : 'rgba(255,90,74,.45)';
+        cx.strokeStyle = ally ? 'rgba(123,227,123,.8)' : !u.d.role ? 'rgba(255,90,74,.45)' : u.team === 'h' ? 'rgba(127,212,255,.55)' : 'rgba(255,160,90,.6)';
         cx.lineWidth = isSel ? 2.5 : 1.2; cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(q.x, q.y); cx.stroke();
       }
     }
@@ -68,6 +68,11 @@ const View = (() => {
     if (sel && sel.plan && sel.plan.spot && alive(sel)) {
       const p = P(sel.plan.spot.x, sel.plan.spot.y);
       cx.strokeStyle = '#ffe27a'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(p.x - 6, p.y - 6); cx.lineTo(p.x + 6, p.y + 6); cx.moveTo(p.x + 6, p.y - 6); cx.lineTo(p.x - 6, p.y + 6); cx.stroke();
+    }
+    // 직접 배치 중: 가운데 선 (왼편·오른편 기준)
+    if (G.phase === 'setup') {
+      const t = P(ARENA.w / 2, 0), b = P(ARENA.w / 2, ARENA.h);
+      cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.setLineDash([6, 6]); cx.lineWidth = 2; cx.beginPath(); cx.moveTo(t.x, t.y); cx.lineTo(b.x, b.y); cx.stroke(); cx.setLineDash([]);
     }
     G.units.slice().sort((a, b) => a.y - b.y).forEach(u => drawUnit(G, u, u === sel));
     // 화살·마법
@@ -88,7 +93,7 @@ const View = (() => {
       const p = P(f.x, f.y), u = f.t / f.life;
       cx.globalAlpha = 1 - u; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.strokeText(f.text, p.x, p.y - u * 20); cx.fillStyle = f.color; cx.fillText(f.text, p.x, p.y - u * 20); cx.globalAlpha = 1;
     }
-    if (opt.bubbles) for (const u of G.units) if (u.team === 'h' && alive(u) && u.say) drawBubble(u, u === sel);
+    if (opt.bubbles) for (const u of G.units) if (u.d.role && alive(u) && u.say) drawBubble(u, u === sel);
   }
   function drawUnit(G, u, isSel) {
     const A = art[u.d.art], p = P(u.x, u.y), sc = (u.d.scale || 1) * S * opt.zoom;
@@ -109,7 +114,7 @@ const View = (() => {
     const Z = m.size, pad = (Z - 64) / 2;
     cx.fillStyle = 'rgba(0,0,0,.25)'; cx.beginPath(); cx.ellipse(p.x, p.y + 2 * sc, 11 * sc, 4 * sc, 0, 0, 7); cx.fill();
     if (isSel) { cx.strokeStyle = '#ffe27a'; cx.lineWidth = 3; cx.beginPath(); cx.ellipse(p.x, p.y + 2 * sc, 15 * sc, 6 * sc, 0, 0, 7); cx.stroke(); }
-    else if (u.team === 'h' && alive(u)) { cx.strokeStyle = '#7fd4ff'; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(p.x, p.y + 2 * sc, 13 * sc, 5 * sc, 0, 0, 7); cx.stroke(); }
+    else if ((u.team === 'h' || G.custom) && alive(u)) { cx.strokeStyle = u.team === 'h' ? '#7fd4ff' : '#ff8a78'; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(p.x, p.y + 2 * sc, 13 * sc, 5 * sc, 0, 0, 7); cx.stroke(); }
     if (u.state === 'dead') cx.globalAlpha = Math.max(0, 1 - u.deadT / 3);
     if (u.state === 'down') cx.globalAlpha = 0.55;
     // 작게 그릴 땐 점을 섞어서 줄인다 (그냥 줄이면 얇은 선이 끊기고 걸을 때 지글거림)
@@ -120,9 +125,9 @@ const View = (() => {
     if (u.blockT > 0 && alive(u)) { cx.fillStyle = 'rgba(156,199,255,.35)'; cx.strokeStyle = '#9cc7ff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(p.x, p.y - 20 * sc, 22 * sc, 0, 7); cx.fill(); cx.stroke(); }
     if (u.state === 'dead') return;
     const w = Math.max(20, 26 * sc), top = p.y - 52 * sc, r = u.hp / u.max;
-    if (u.team === 'h' || u.hp < u.max) {
+    if (u.d.role || u.hp < u.max) {
       cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(p.x - w / 2 - 1, top, w + 2, 5);
-      cx.fillStyle = u.team === 'h' ? (r > 0.5 ? '#4cc36b' : r > 0.25 ? '#f0b429' : '#e5533d') : '#e5533d'; cx.fillRect(p.x - w / 2, top + 1, w * r, 3);
+      cx.fillStyle = u.d.role ? (r > 0.5 ? '#4cc36b' : r > 0.25 ? '#f0b429' : '#e5533d') : '#e5533d'; cx.fillRect(p.x - w / 2, top + 1, w * r, 3);
     }
     if (u.d.mana) { cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(p.x - w / 2 - 1, top + 5, w + 2, 4); cx.fillStyle = '#5aa0ff'; cx.fillRect(p.x - w / 2, top + 6, w * u.mana / u.d.mana, 2); }
     if (u.state === 'cast') { const s = SKILLS[u.cast.k], k = u.cast.T / s.cast; cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(p.x - w / 2 - 1, p.y + 6 * sc, w + 2, 5); cx.fillStyle = '#ffe27a'; cx.fillRect(p.x - w / 2, p.y + 7 * sc, w * k, 3); }
@@ -149,5 +154,6 @@ const View = (() => {
     const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false; c.clearRect(0, 0, canvas.width, canvas.height);
     c.drawImage(art[artId].img.idle, 0, 128, 64, 64, -6, -8, canvas.width * 1.25, canvas.height * 1.25);
   }
-  return { init, draw, pick, portrait, opt, get ready() { return ready; } };
+  const toWorldPt = (sx, sy) => toWorld(sx, sy);
+  return { init, draw, pick, portrait, opt, toWorld: toWorldPt, get ready() { return ready; } };
 })();
