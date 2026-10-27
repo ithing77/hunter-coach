@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>리소스 창고</title>
+<style>
+  :root { --bg: #1d1f1a; --panel: #2a2c25; --line: #3c3f35; --ink: #f1efe8; --muted: #a9a79c; --accent: #f0b429; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  button, input, select { font-family: inherit; }
+  button { cursor: pointer; }
+  #app { max-width: 1400px; margin: 0 auto; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 14px; }
+  h1 { grid-column: 1 / 3; margin: 0; font-size: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  h1 small { color: var(--muted); font-weight: 400; font-size: 13px; }
+  h1 .sp { flex: 1; }
+  h1 a { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 14px; text-decoration: none; }
+  .panel { background: var(--panel); border-radius: 12px; padding: 12px 14px; }
+  #tabs { grid-column: 1 / 3; display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 700; }
+  .tab small { color: var(--muted); font-weight: 400; font-size: 11.5px; margin-left: 3px; }
+  .tab.on { border-color: var(--accent); background: #4a4222; }
+  #bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; margin-bottom: 10px; }
+  #bar input, #bar select { background: #33352d; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+  #bar input { width: 200px; }
+  #bar select { max-width: 280px; }
+  #bar button { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 5px 10px; }
+  #count { color: var(--muted); }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+  .card { background: #33352d; border: 1.5px solid #4a4d42; border-radius: 10px; padding: 6px; cursor: pointer; min-width: 0; }
+  .card.on { border-color: var(--accent); background: #4a4222; }
+  .card canvas, .card img { width: 100%; aspect-ratio: 1; display: block; image-rendering: pixelated; object-fit: contain; background: repeating-conic-gradient(#2d2f27 0 25%, #282a23 0 50%) 0 0 / 16px 16px; border-radius: 6px; }
+  .card .n { font-size: 12px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .p { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  table.snd { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.snd td { border-bottom: 1px solid var(--line); padding: 4px 6px; }
+  table.snd td.m { color: var(--muted); font-size: 11.5px; }
+  table.snd button { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; width: 32px; padding: 3px 0; }
+  #pager { display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 12px; font-size: 13px; }
+  #pager button { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 5px 12px; }
+  #side { position: sticky; top: 14px; align-self: start; max-height: calc(100vh - 28px); overflow: auto; }
+  #big { width: 100%; height: 300px; display: block; image-rendering: pixelated; background: repeating-conic-gradient(#2d2f27 0 25%, #282a23 0 50%) 0 0 / 20px 20px; border-radius: 8px; }
+  #side h3 { margin: 10px 0 4px; font-size: 15px; }
+  .kv { display: grid; grid-template-columns: 70px 1fr; gap: 3px 8px; font-size: 12px; margin-top: 6px; word-break: break-all; }
+  .kv div:nth-child(odd) { color: var(--muted); }
+  .kv a { color: #9cc7ff; }
+  .anims { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+  .anims button { background: #33352d; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 3px 8px; font-size: 12px; }
+  .anims button.on { border-color: var(--accent); background: #4a4222; }
+  .row2 { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  .row2 button { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 4px 9px; font-size: 12px; }
+  .row2 button.on { border-color: var(--accent); background: #4a4222; }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+  #off { grid-column: 1 / 3; display: none; }
+  @media (max-width: 900px) { #app { grid-template-columns: 1fr; } h1, #tabs, #off { grid-column: 1; } #side { position: static; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>🗂 리소스 창고 <small>C:\AI\Assets 에 모아 둔 이펙트·마법·몬스터·맵·소리·그림 묶음</small><span class="sp"></span>
+    <a href="workshop.html">🎬 동작 작업실</a><a href="skills.html">✨ 직업·스킬</a></h1>
+  <div class="panel" id="off">이 화면은 <b>내 컴퓨터 작업실</b>에서만 열려요. 바탕화면 <b>헌터 감독 작업실</b> 아이콘으로 열어 주세요. (재배포 금지 그림이 섞여 있어 공개 사이트에는 올리지 않아요)</div>
+  <div class="panel" id="tabs"></div>
+  <div class="panel">
+    <div id="bar"><input id="q" placeholder="이름·묶음·작가 찾기"><select id="pack"></select><select id="grp" style="display:none"></select><span id="count"></span></div>
+    <div id="grid"></div>
+    <div id="pager"></div>
+  </div>
+  <div class="panel" id="side"><div class="note">왼쪽에서 하나를 누르면 여기서 크게 보여요.</div></div>
+</div>
+<script>
+// 리소스 창고: 이미 있는 표(index.json·monsters.json·sounds/index.json)와 tools/build_resources.py 가 만든 _gallery.json 을 읽어
+//   탭마다 그림·움직임·소리를 훑어보고, 고르면 크게 + 경로·라이선스를 보여 준다. 그림은 /assets/ (작업실 서버가 C:\AI\Assets 를 읽음)
+const A = 'assets/';
+const TABS = [
+  { key: 'effect', n: '이펙트', base: 'effects/', json: 'effects/index.json', kind: 'anim' },
+  { key: 'magic', n: '마법', base: 'magic/', json: 'magic/index.json', kind: 'anim' },
+  { key: 'monster', n: '몬스터', base: 'monsters/', json: 'monsters/monsters.json', kind: 'anim' },
+  { key: 'map', n: '맵', base: 'maps/', json: 'maps/index.json', kind: 'image' },
+  { key: 'sound', n: '소리', base: 'sounds/', json: 'sounds/index.json', kind: 'sound' },
+  { key: 'gallery', n: '그림 묶음', base: '', json: '_gallery.json', kind: 'image' },
+];
+const PER = 120, FPS = 10;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let tab = TABS[0], items = [], shown = [], page = 0, sel = null, selAnim = 0, bigZoom = 0;
+const data = {}, imgs = {};
+const img = url => imgs[url] || (imgs[url] = Object.assign(new Image(), { src: url }));
+
+async function load(t) {
+  if (data[t.key]) return data[t.key];
+  let list = await (await fetch(A + t.json)).json();
+  if (t.key === 'gallery') list = list.flatMap(p => p.files.map(f => ({ ...f, id: f.src, packInfo: { name: p.name, author: p.name, license: p.license, id: p.id } })));
+  else list = list.map(x => ({ ...x, src: x.src || (x.anims && x.anims[0].src) }));
+  for (const x of list) { x.base = t.base; x.packInfo = x.packInfo || { name: '?', author: '?', license: '?' }; }
+  return (data[t.key] = list);
+}
+async function buildTabs() {
+  $('tabs').innerHTML = TABS.map(t => `<button class="tab" data-k="${t.key}">${t.n}<small id="c-${t.key}"></small></button>`).join('');
+  for (const b of document.querySelectorAll('.tab')) b.onclick = () => useTab(TABS.find(t => t.key === b.dataset.k));
+  for (const t of TABS) load(t).then(l => { $('c-' + t.key).textContent = l.length.toLocaleString(); }).catch(() => {});
+}
+async function useTab(t) {
+  tab = t; page = 0; sel = null;
+  for (const b of document.querySelectorAll('.tab')) b.classList.toggle('on', b.dataset.k === t.key);
+  try { items = await load(t); } catch (e) { $('off').style.display = 'block'; items = []; }
+  const packs = [...new Set(items.map(x => x.packInfo.name))].sort();
+  $('pack').innerHTML = `<option value="">묶음 전체 (${packs.length})</option>` + packs.map(p => `<option>${esc(p)}</option>`).join('');
+  $('q').value = ''; $('grp').style.display = 'none';
+  try { localStorage.setItem('resTab', t.key); } catch (e) {}
+  filter();
+  $('side').innerHTML = '<div class="note">왼쪽에서 하나를 누르면 여기서 크게 보여요.</div>';
+}
+function filter() {
+  const q = $('q').value.trim().toLowerCase(), p = $('pack').value, g = $('grp').value;
+  // 그림 묶음은 폴더가 많아서 묶음을 고르면 폴더 고르기를 띄운다
+  if (tab.key === 'gallery' || tab.key === 'map') {
+    const gs = p ? [...new Set(items.filter(x => x.packInfo.name === p).map(x => x.group || x.kind || ''))].sort() : [];
+    $('grp').style.display = gs.length > 1 ? '' : 'none';
+    if ($('grp').dataset.pack !== p) { $('grp').dataset.pack = p; $('grp').innerHTML = `<option value="">폴더 전체 (${gs.length})</option>` + gs.map(x => `<option>${esc(x)}</option>`).join(''); }
+  }
+  const gv = $('grp').style.display === 'none' ? '' : $('grp').value;
+  shown = items.filter(x => (!p || x.packInfo.name === p) && (!gv || (x.group || x.kind || '') === gv) &&
+    (!q || `${x.name} ${x.packInfo.name} ${x.packInfo.author} ${x.group || ''} ${x.cat || ''}`.toLowerCase().includes(q)));
+  page = 0; draw();
+}
+function draw() {
+  const n = shown.length, pages = Math.max(1, Math.ceil(n / PER)), list = shown.slice(page * PER, page * PER + PER);
+  $('count').textContent = `${n.toLocaleString()}개`;
+  if (tab.kind === 'sound') {
+    $('grid').style.display = 'block';
+    $('grid').innerHTML = `<table class="snd">${list.map((x, i) => `<tr><td style="width:36px"><button data-i="${i}">▶</button></td><td>${esc(x.name)}</td><td class="m">${esc(x.cat)}${x.group ? ' · ' + esc(x.group) : ''}</td><td class="m">${esc(x.packInfo.name)}</td><td class="m">${esc(x.packInfo.license)}</td></tr>`).join('')}</table>`;
+    for (const b of $('grid').querySelectorAll('button')) b.onclick = () => play(list[+b.dataset.i], b);
+  } else {
+    $('grid').style.display = 'grid';
+    $('grid').innerHTML = list.map((x, i) => `<div class="card" data-i="${i}">${tab.kind === 'anim' ? '<canvas width="96" height="96"></canvas>' : `<img loading="lazy" src="${esc(A + x.base + x.src)}">`}<div class="n" title="${esc(x.name)}">${esc(x.name)}</div><div class="p">${esc(x.packInfo.name)}</div></div>`).join('');
+    for (const c of $('grid').querySelectorAll('.card')) c.onclick = () => pick(list[+c.dataset.i], c);
+    visible.clear();
+    for (const c of $('grid').querySelectorAll('.card canvas')) io.observe(c);
+  }
+  $('pager').innerHTML = pages > 1 ? `<button id="pp">◀ 앞</button><span>${page + 1} / ${pages}</span><button id="pn">뒤 ▶</button>` : '';
+  if (pages > 1) { $('pp').onclick = () => { if (page > 0) { page--; draw(); scrollTo(0, 0); } }; $('pn').onclick = () => { if (page < pages - 1) { page++; draw(); scrollTo(0, 0); } }; }
+}
+// 움직이는 카드는 화면에 보이는 것만 그린다
+const visible = new Set();
+const io = new IntersectionObserver(es => { for (const e of es) e.isIntersecting ? visible.add(e.target) : visible.delete(e.target); });
+function frameOf(x, a, t, cv, zoom) {
+  const im = img(A + x.base + a.src);
+  if (!im.complete || !im.naturalWidth) return;
+  const [cw, ch] = a.cell, f = (a.start || 0) + Math.floor(t * FPS) % Math.max(1, a.frames || 1), cols = a.cols || Math.floor(im.naturalWidth / cw);
+  const sx = (f % cols) * cw, sy = Math.floor(f / cols) * ch, c = cv.getContext('2d');
+  const k = zoom || Math.min(cv.width / cw, cv.height / ch);
+  c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height);
+  c.drawImage(im, sx, sy, cw, ch, (cv.width - cw * k) / 2, (cv.height - ch * k) / 2, cw * k, ch * k);
+}
+function tick(now) {
+  const t = now / 1000;
+  if (tab.kind === 'anim') {
+    const list = shown.slice(page * PER, page * PER + PER);
+    for (const cv of visible) { const x = list[+cv.parentNode.dataset.i]; if (x && x.anims) frameOf(x, x.anims[0], t, cv); }
+  }
+  if (sel && sel.anims && $('big')) { const a = sel.anims[selAnim] || sel.anims[0]; frameOf(sel, a, t, $('big'), bigZoom || null); }
+  requestAnimationFrame(tick);
+}
+function pick(x, card) {
+  sel = x; selAnim = 0; bigZoom = 0;
+  for (const c of document.querySelectorAll('.card.on')) c.classList.remove('on');
+  card.classList.add('on');
+  const P = x.packInfo, path = 'C:\\AI\\Assets\\' + (x.base + (x.anims ? x.anims[0].src : x.src)).replace(/\//g, '\\');
+  $('side').innerHTML = (x.anims ? '<canvas id="big" width="320" height="300"></canvas>' : `<img id="bigImg" src="${esc(A + x.base + x.src)}" style="width:100%;max-height:420px;object-fit:contain;image-rendering:pixelated;background:repeating-conic-gradient(#2d2f27 0 25%, #282a23 0 50%) 0 0 / 20px 20px;border-radius:8px">`) +
+    (x.anims ? `<div class="row2">크기 <button class="zb on" data-z="0">맞춤</button><button class="zb" data-z="1">1배</button><button class="zb" data-z="2">2배</button><button class="zb" data-z="3">3배</button></div>` : '') +
+    `<h3>${esc(x.name)}</h3>` +
+    (x.anims && x.anims.length > 1 ? `<div class="anims">${x.anims.map((a, i) => `<button data-a="${i}" class="${i ? '' : 'on'}">${esc(a.name)} <small>${a.frames}</small></button>`).join('')}</div>` : '') +
+    `<div class="kv"><div>묶음</div><div>${esc(P.name)}</div><div>작가</div><div>${esc(P.author)}</div><div>라이선스</div><div>${esc(P.license)}</div>` +
+    (P.url ? `<div>주소</div><div><a href="${esc(P.url)}" target="_blank">${esc(P.url)}</a></div>` : '') +
+    (x.anims ? `<div>칸</div><div id="cellInfo"></div>` : x.size ? `<div>크기</div><div>${x.size[0]}×${x.size[1]}</div>` : '') +
+    (x.group ? `<div>폴더</div><div>${esc(x.group)}</div>` : '') +
+    `<div>파일</div><div>${esc(path)}</div></div>` +
+    `<div class="row2"><button id="copyPath">📋 경로 복사</button><span id="copied"></span></div>` +
+    `<div class="note">게임에 쓰고 싶으면 대화창에 "이 이펙트를 ○○ 스킬에 써 줘" + 이름을 알려 주세요.</div>`;
+  const info = () => { if (!x.anims) return; const a = x.anims[selAnim]; $('cellInfo').textContent = `${a.cell[0]}×${a.cell[1]} · ${a.frames}칸`; };
+  info();
+  for (const b of $('side').querySelectorAll('[data-a]')) b.onclick = () => { selAnim = +b.dataset.a; for (const o of $('side').querySelectorAll('[data-a]')) o.classList.toggle('on', o === b); info(); };
+  for (const b of $('side').querySelectorAll('.zb')) b.onclick = () => { bigZoom = +b.dataset.z; for (const o of $('side').querySelectorAll('.zb')) o.classList.toggle('on', o === b); };
+  $('copyPath').onclick = () => { navigator.clipboard.writeText(path).then(() => { $('copied').textContent = '복사했어요'; }); };
+}
+const player = new Audio();
+let playing = null;
+function play(x, b) {
+  if (playing === b && !player.paused) { player.pause(); b.textContent = '▶'; playing = null; return; }
+  if (playing) playing.textContent = '▶';
+  player.src = A + x.base + x.src; player.currentTime = 0; player.play().catch(() => {});
+  b.textContent = '■'; playing = b; player.onended = () => { b.textContent = '▶'; playing = null; };
+}
+$('q').oninput = filter; $('pack').onchange = () => { $('grp').value = ''; filter(); }; $('grp').onchange = filter;
+buildTabs().then(() => {
+  let k = 'effect'; try { k = localStorage.getItem('resTab') || k; } catch (e) {}
+  useTab(TABS.find(t => t.key === k) || TABS[0]);
+  requestAnimationFrame(tick);
+});
+</script>
+</body>
+</html>

@@ -25,6 +25,7 @@
   .set.on { border-color: var(--accent); background: #4a4222; }
   #setDesc { width: 100%; font-size: 12.5px; color: var(--muted); }
   #genBtn { margin-left: auto; background: var(--accent); color: #222; border: 0; border-radius: 8px; padding: 6px 14px; font-weight: 900; font-size: 14px; cursor: pointer; }
+  #resBtn { background: #3a3d33; color: var(--ink, #eee); border: 1.5px solid var(--accent); border-radius: 8px; padding: 6px 14px; font-weight: 900; font-size: 14px; text-decoration: none; margin-left: 6px; }
   #skillBtn { background: #4a4222; color: var(--ink, #eee); border: 1.5px solid var(--accent); border-radius: 8px; padding: 6px 14px; font-weight: 900; font-size: 14px; text-decoration: none; margin-left: 6px; }
   #sheetBtn, #arenaBtn { background: #3a3d33; color: var(--ink, #eee); border: 1px solid #4a4d42; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 14px; text-decoration: none; margin-left: 6px; }
   #gen { position: fixed; inset: 0; z-index: 50; background: #1d1f1a; display: flex; flex-direction: column; }
@@ -53,7 +54,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>🎬 동작 작업실 <small>LPC 생성기로 조립한 갑옷 세트와 모든 동작</small><button id="genBtn">🧩 캐릭터 만들기</button><a id="sheetBtn" href="https://docs.google.com/spreadsheets/d/15sPuuAGJbLvGQA6hZ4GwZ3AP6FiIYGSPtr0_9lx9ZLg/edit" target="_blank">📊 스킬 시트</a><a id="arenaBtn" href="arena.html?scn=custom" target="_blank">⚔ 테스트 아레나</a><a id="skillBtn" href="skills.html">✨ 직업·스킬</a></h1>
+  <h1>🎬 동작 작업실 <small>LPC 생성기로 조립한 갑옷 세트와 모든 동작</small><button id="genBtn">🧩 캐릭터 만들기</button><a id="sheetBtn" href="https://docs.google.com/spreadsheets/d/15sPuuAGJbLvGQA6hZ4GwZ3AP6FiIYGSPtr0_9lx9ZLg/edit" target="_blank">📊 스킬 시트</a><a id="arenaBtn" href="arena.html?scn=custom" target="_blank">⚔ 테스트 아레나</a><a id="skillBtn" href="skills.html">✨ 직업·스킬</a><a id="resBtn" href="resources.html">🗂 리소스</a></h1>
   <div class="panel" id="setBar" style="grid-column:1 / 3"></div>
   <div>
     <div class="panel">
