@@ -17,6 +17,19 @@ function presetLayout(k) {
   return { h: left, e: list.map((kind, i) => UNITS[kind].scale ? { kind, x: 20, y: 8 } : { kind, x: 20.5, y: 2.5 + (i + 0.5) / list.length * 11 }) };
 }
 if (!layout.h.length && !layout.e.length) layout = presetLayout('mirror');
+// 파티 편성 (5명, 같은 직업 여러 명 가능). 이 브라우저에 기억해 둔다
+const DEFAULT_PARTY = PARTY.slice();
+try { const p = JSON.parse(localStorage.getItem('arenaParty')); if (Array.isArray(p) && p.length === PARTY.length && p.every(k => UNITS[k] && UNITS[k].role)) PARTY.splice(0, PARTY.length, ...p); } catch (e) {}
+function partyUI() {
+  const jobs = Object.keys(UNITS).filter(k => UNITS[k].role);
+  $('partyBox').innerHTML = `<h2>👥 파티 편성</h2><div class="sub">5자리마다 직업을 고르세요. 같은 직업을 여러 명 넣어도 돼요. 1번 자리가 맨 앞이에요.</div>
+    <table>${PARTY.map((k, i) => `<tr><td>${i + 1}번 자리</td><td style="text-align:left">${jobs.map(j => `<button data-slot="${i}" data-job="${j}" class="${j === k ? '' : 'ghost'}" style="padding:5px 10px;margin:2px">${UNITS[j].name}</button>`).join('')}</td></tr>`).join('')}</table>
+    <div class="row-btns"><button id="partyGo">✔ 이 파티로 시작</button><button class="ghost" id="partyDef">기본 파티로</button><button class="ghost" id="partyClose">닫기</button></div>`;
+  for (const b of $('partyBox').querySelectorAll('[data-slot]')) b.onclick = () => { PARTY[+b.dataset.slot] = b.dataset.job; partyUI(); };
+  $('partyDef').onclick = () => { PARTY.splice(0, PARTY.length, ...DEFAULT_PARTY); partyUI(); };
+  $('partyClose').onclick = () => { $('party').style.display = 'none'; };
+  $('partyGo').onclick = () => { try { localStorage.setItem('arenaParty', JSON.stringify(PARTY)); } catch (e) {} $('party').style.display = 'none'; start(); };
+}
 const sideOf = u => (u && u.d.role ? u.team : 'h');
 
 function start(toSetup) {
@@ -122,7 +135,7 @@ function renderEnemy(u) {
   const mx = Math.max(1, ...rows.map(r => r.v));
   let h = `<h3>👹 몬스터 머리 보기</h3><div class="who">${G.custom ? (u.team === 'h' ? '🔵 ' : '🔴 ') : ''}${u.label} <span class="sub">체력 ${Math.ceil(u.hp)}/${u.max}${!alive(u) ? ' · 죽음' : ''}</span></div>
     <div style="margin-top:4px">표적: <b>${u.target ? u.target.label : '없음'}</b> <span class="sub">${esc(u.why || '')}</span></div>
-    <div class="sub" style="margin:6px 0 2px">위협표 (누구에게 화가 났나)${u.d.backMul ? ` — 궁수·힐러는 ×${u.d.backMul}로 봄` : ''}</div>`;
+    <div class="sub" style="margin:6px 0 2px">위협표 (누구에게 화가 났나)${u.d.backMul ? ` — 뒷줄(궁수·힐러·마법사)은 ×${u.d.backMul}로 봄` : ''}</div>`;
   for (const r of rows) h += `<div class="thr"><span>${r.h.label}</span><span class="b"><i style="width:${r.v / mx * 100}%"></i></span><span class="sub" style="text-align:right">${Math.round(r.v)}</span></div>`;
   h += `<div class="sub" style="margin-top:6px">위협은 맞은 피해(기사는 ×4) · 받은 힐의 절반 · 가까이 있음으로 쌓이고, 도발하면 최고값 ×1.1이 됩니다. 15% 이상 차이 나야 표적을 바꿉니다.</div>`;
   if (u.d.skills && u.d.skills.includes('slam')) h += `<div class="sub">내려찍기 ${notReady(u, 'slam') || '준비'}</div>`;
@@ -196,7 +209,7 @@ function batchUI(rows, running) {
     h += `</table>`;
   }
   h += running ? `<div style="margin-top:10px">${running}</div>` : `<div class="row-btns"><button id="bNow">지금 상황·성향만</button><button id="bAll">전부 (3상황 × 4성향)</button><button class="ghost" id="bClose">닫기</button></div>
-    <div class="sub" style="margin-top:8px">탱커가 맞음 = 근접 적이 기사를 노린 시간 비율 · 뒷줄 피해 = 궁수+성직자가 받은 피해 · 걸음 떨림 = 같은 결정 안에서 0.4초 안에 뒤돌아선 횟수 · "비교용: 생각 없음"은 피하기·스킬 없이 가까운 적만 치는 머리</div>`;
+    <div class="sub" style="margin-top:8px">탱커가 맞음 = 근접 적이 기사를 노린 시간 비율 · 뒷줄 피해 = 궁수·성직자·마법사가 받은 피해 · 걸음 떨림 = 같은 결정 안에서 0.4초 안에 뒤돌아선 횟수 · "비교용: 생각 없음"은 피하기·스킬 없이 가까운 적만 치는 머리</div>`;
   $('batchBox').innerHTML = h;
   if (!running) { $('bNow').onclick = () => runBatch([[$('scn').value, $('style').value, isCustom() ? { h: layout.h, e: layout.e, styleE: $('styleE').value } : null]]); $('bAll').onclick = () => runBatch(Object.keys(SCENARIOS).flatMap(s => Object.keys(STYLES).map(t => [s, t]))); $('bClose').onclick = () => { $('batch').style.display = 'none'; }; }
 }
@@ -231,6 +244,7 @@ $('diceBtn').onclick = () => { $('seed').value = Math.floor(Math.random() * 9000
 $('pauseBtn').onclick = () => setPaused(!paused);
 $('stepBtn').onclick = () => { setPaused(true); for (let i = 0; i < 3; i++) step(G, STEP); renderPanels(true); };
 for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => { speed = +b.dataset.speed; document.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('on', x === b)); };
+$('partyBtn').onclick = () => { $('party').style.display = 'grid'; partyUI(); };
 $('batchBtn').onclick = () => { $('batch').style.display = 'grid'; batchUI([], ''); };
 $('logSel').onchange = () => renderLog(true);
 $('field').addEventListener('click', e => {

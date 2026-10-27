@@ -67,6 +67,11 @@ PARTY = {
         ('hair/short/hair_plain.json', None), ('torso/armour/torso_armour_plate.json', None), ('legs/legs_armour.json', None), ('feet/feet_armour.json', None),
         ('arms/shoulders/shoulders_pauldrons.json', None), ('headwear/helmets/helmets/hat_helmet_nasal.json', None),
         ('weapons/shields/heater/shield_heater_wood.json', None), ('weapons/sword/weapon_sword_arming.json', 'steel')]},
+    'mage': {'name': '마법사', 'sex': 'male', 'parts': BASE + [
+        ('legs/pants/legs_pants.json', None, DARK), ('feet/boots/feet_boots_revised.json', None, BROWN),
+        ('torso/shirts/longsleeve/torso_clothes_longsleeve.json', None, (0.55, 0.35, 0.8)),
+        ('hair/beards/beards_winter.json', None, BONE), ('headwear/hats/magic/hat_magic_wizard.json', 'purple'),
+        ('weapons/magic/weapon_magic_simple.json', 'simple')]},
     'skel_archer': {'name': '해골 궁수', 'sex': 'male', 'parts': [('body/special/body_skeleton.json', None), ('head/heads/undead/heads_skeleton.json', None),
         ('weapons/ranged/bow/weapon_ranged_bow_normal.json', 'light'), ('weapons/ranged/bow/weapon_ranged_bow_arrow.json', 'arrow')]},
 }

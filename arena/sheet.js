@@ -73,6 +73,26 @@ const SHEET = {
     "bigheal"
    ]
   },
+  "mage": {
+   "name": "마법사",
+   "role": "mage",
+   "hp": 130,
+   "armor": 0,
+   "spd": 3.1,
+   "range": 5.5,
+   "atk": 10,
+   "atkTime": 1.3,
+   "hitAt": 0.6,
+   "melee": false,
+   "mana": 120,
+   "manaRegen": 5,
+   "art": "mage",
+   "attack": "spellcast",
+   "skills": [
+    "fireball",
+    "bolt"
+   ]
+  },
   "goblin": {
    "name": "고블린",
    "hp": 42,
@@ -218,6 +238,35 @@ const SHEET = {
    "dmg": 110,
    "warn": 1.5,
    "reach": 4
+  },
+  "fireball": {
+   "tags": [
+    "범위",
+    "공격"
+   ],
+   "n": "화염구",
+   "cd": 7,
+   "cast": 1,
+   "hitAt": 0.8,
+   "radius": 1.6,
+   "range": 6,
+   "dmg": 40,
+   "mana": 25,
+   "anim": "spellcast"
+  },
+  "bolt": {
+   "tags": [
+    "강공격",
+    "공격"
+   ],
+   "n": "마력 화살",
+   "cd": 9,
+   "cast": 1.4,
+   "hitAt": 1,
+   "range": 6,
+   "mult": 3,
+   "mana": 20,
+   "anim": "spellcast"
   }
  }
 };

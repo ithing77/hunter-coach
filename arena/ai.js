@@ -26,7 +26,7 @@ function updateBoard(G, dt) {
   for (const s of G.shots) if (s.from.team === G.me) addP(s.t, s.dmg);
   for (const h of liveHeroes(G)) {
     if (h.state === 'attack' && !h.hitDone && h.atkTarget) addP(h.atkTarget, h.d.atk);
-    if (h.state === 'cast' && h.cast.k === 'aimed' && h.cast.t) addP(h.cast.t, h.d.atk * SKILLS.aimed.mult);
+    if (h.state === 'cast' && SKILLS[h.cast.k].mult && h.cast.t) addP(h.cast.t, h.d.atk * SKILLS[h.cast.k].mult);
   }
   for (const [id, c] of B.healClaims) if (c.until < G.t - 0.05) B.healClaims.delete(id);
   if (B.updT > 0) return;
@@ -82,7 +82,8 @@ function updateBoard(G, dt) {
       break;
   }
 }
-const isBack = h => h.d.role === 'healer' || h.d.role === 'archer';
+const BACK_ROLES = { healer: 1, archer: 1, mage: 1 };
+const isBack = h => !!BACK_ROLES[h.d.role];
 
 // ---------- 생각하기 ----------
 function think(G, u) {
@@ -167,7 +168,7 @@ function notReady(u, k) {
 }
 function formationSpot(G, u) {
   const B = G.board, f = B.fwd, side = { x: -f.y, y: f.x }, c = B.regroup || u;
-  const off = { tank: [1.2, 0], dealer: [0.6, 1.3], archer: [-1.6, -1.2], healer: [-2, 1] }[u.d.role] || [0, 0];
+  const off = { tank: [1.2, 0], dealer: [0.6, 1.3], archer: [-1.6, -1.2], healer: [-2, 1], mage: [-2.2, -0.1] }[u.d.role] || [0, 0];
   return inArena({ x: c.x + f.x * off[0] + side.x * off[1], y: c.y + f.y * off[0] + side.y * off[1] });
 }
 function bestSpot(G, u) {
@@ -239,12 +240,25 @@ const SCORE = {
     const v = 0.16 * atk.length + (soon ? 0.25 : 0) + (1 - u.hp / u.max) * 0.35 - 0.1;
     return { label: s.n, short: `🛡 ${s.n}`, score: Math.max(0, v), why: `나를 치는 적 ${atk.length}${soon ? ' · 곧 내려찍기' : ''} · 체력 ${Math.round(u.hp / u.max * 100)}%`, plan: { kind: 'skill', skill: a.skill, target: u } };
   },
-  // 범위 스킬: 주변 적이 많을수록
+  // 범위 스킬: 주변 적이 많을수록. 사거리가 있는 범위(화염구)는 사거리 안 적 중 주변에 적이 제일 많이 모인 적을 노린다
   '범위'(G, u, a) {
     if (!a.skill) return null;
     const s = SKILLS[a.skill], nr = notReady(u, a.skill);
     if (nr) return { label: s.n, score: 0, why: nr };
-    const inR = liveFoes(G).filter(e => dist(e, u) <= s.radius + 0.2);
+    const es = liveFoes(G);
+    if (s.range) {
+      let c = null, inC = [];
+      for (const e of es) {
+        if (dist(u, e) > s.range + 1) continue;
+        const n = es.filter(o => dist(o, e) <= s.radius + 0.2);
+        if (n.length > inC.length || (n.length === inC.length && c && dist(u, e) < dist(u, c))) { c = e; inC = n; }
+      }
+      if (!c) return { label: s.n, score: 0, why: '사거리 안에 적 없음' };
+      const big = inC.some(e => e.d.scale);
+      const v = inC.length >= 2 ? 0.45 + 0.15 * (inC.length - 2) : big ? 0.35 : 0.1;
+      return { label: `${s.n} → ${c.label} (${inC.length}마리)`, short: `🔥 ${s.n}`, score: Math.min(1, v), why: `${c.label} 둘레 ${s.radius}칸에 적 ${inC.length}${inC.length < 2 ? (big ? ' · 큰 적이라 하나라도 씀' : ' (2마리 이상일 때 씀)') : ''}`, plan: { kind: 'skill', skill: a.skill, target: c } };
+    }
+    const inR = es.filter(e => dist(e, u) <= s.radius + 0.2);
     const big = inR.some(e => e.d.scale);
     let v = inR.length >= 2 ? 0.4 + 0.15 * (inR.length - 2) : big ? 0.35 : 0.1 * inR.length;
     return { label: `${s.n} (${inR.length}마리)`, short: `🌀 ${s.n}`, score: Math.min(1, v), why: `범위 안 적 ${inR.length}${inR.length < 2 ? (big ? ' · 큰 적이라 하나라도 씀' : ' (2마리 이상일 때 씀)') : ''}`, plan: { kind: 'skill', skill: a.skill, target: u } };

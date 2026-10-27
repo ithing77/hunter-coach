@@ -56,6 +56,7 @@ function newBattle(scn, styleId, seed, setup) {
     return G;
   }
   for (const k of SCENARIOS[scn].units) total['e' + k] = (total['e' + k] || 0) + 1;
+  for (const k of PARTY) total['h' + k] = (total['h' + k] || 0) + 1;
   PARTY.forEach((k, i) => { const p = PARTY_SPOTS[i]; mk(k, 'h', p[0] + (rng() - 0.5) * 1.5, p[1] + (rng() - 0.5) * 1.5); });
   const list = SCENARIOS[scn].units;
   list.forEach((k, i) => {
@@ -163,7 +164,7 @@ function enemyTick(G, u, dt) {
   moveTo(G, u, t, dt, u.d.melee ? u.d.range * 0.85 : u.d.range - 0.5);
 }
 function addThreat(e, h, v) { e.threat.set(h.id, (e.threat.get(h.id) || 0) + v); }
-function threatValue(e, h) { return (e.threat.get(h.id) || 0) * (e.d.backMul && (h.d.role === 'healer' || h.d.role === 'archer') ? e.d.backMul : 1); }
+function threatValue(e, h) { return (e.threat.get(h.id) || 0) * (e.d.backMul && isBack(h) ? e.d.backMul : 1); }
 function pickTarget(G, u, hs) {
   if (u.forcedT > 0 && u.target && alive(u.target)) { u.why = `도발당함 (${u.forcedT.toFixed(1)}초 남음)`; return; }
   let best = null, bv = -1;
@@ -221,10 +222,11 @@ function applySkill(G, u, k, t) {
   } else if (k === 'block') {
     u.blockT = s.dur;
     G.fx.push({ kind: 'num', x: u.x, y: u.y - 1.6, text: '방패!', color: '#9cc7ff', t: 0, life: 1 });
-  } else if (k === 'whirl') {
-    for (const e of liveFoes(G)) if (dist(e, u) <= s.radius) dealDamage(G, u, e, s.dmg);
-    G.fx.push({ kind: 'ring', x: u.x, y: u.y, r: s.radius, color: '#ffffff', t: 0, life: 0.3 });
-  } else if (k === 'aimed') {
+  } else if (s.radius && s.dmg) {   // 범위 피해: 사거리가 있으면 표적 자리(화염구), 없으면 내 둘레(회전 베기)
+    const c = s.range && t ? { x: t.x, y: t.y } : u;
+    for (const e of liveFoes(G)) if (dist(e, c) <= s.radius) dealDamage(G, u, e, s.dmg);
+    G.fx.push({ kind: 'ring', x: c.x, y: c.y, r: s.radius, color: s.range ? '#ff8a3a' : '#ffffff', t: 0, life: s.range ? 0.45 : 0.3 });
+  } else if (s.mult) {   // 강한 한 방 (조준 사격·마력 화살)
     if (t && alive(t)) G.shots.push({ x: u.x, y: u.y - 0.4, t, from: u, dmg: u.d.atk * s.mult, kind: 'big' });
   } else if (s.amount) {
     if (t && alive(t)) heal(G, u, t, s.amount);
@@ -317,7 +319,7 @@ function summarize(G) {
   return {
     result: G.phase, time: S.end || G.t, deaths: S.deaths,
     tankPct: S.meleeT ? S.tankT / S.meleeT : 0,
-    backDmg: (S.dmgTaken.archer || 0) + (S.dmgTaken.cleric || 0),
+    backDmg: Object.keys(S.dmgTaken).filter(k => BACK_ROLES[UNITS[k].role]).reduce((a, k) => a + S.dmgTaken[k], 0),
     slamDodge: S.slamIn ? 1 - S.slamHit / S.slamIn : null,
     switchPerMin: S.switches / min, overhealPct: S.healDone + S.overheal ? S.overheal / (S.healDone + S.overheal) : 0,
     overkillPct: S.dmgDone ? S.overkill / S.dmgDone : 0, flipPerMin: S.flips / min,

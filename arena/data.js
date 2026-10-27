@@ -11,13 +11,15 @@ const UNITS = {
   gs: { name: '검사', role: 'dealer', hp: 180, armor: 0.1, spd: 3.4, range: 1.3, atk: 24, atkTime: 1.0, hitAt: 0.5, melee: true, art: 'gs', attack: 'slash_oversize', skills: ['whirl'] },
   archer: { name: '궁수', role: 'archer', hp: 140, armor: 0, spd: 3.3, range: 6.5, atk: 13, atkTime: 1.1, hitAt: 0.72, melee: false, art: 'bow', attack: 'shoot', skills: ['aimed'] },
   cleric: { name: '성직자', role: 'healer', hp: 150, armor: 0, spd: 3.1, range: 5, atk: 6, atkTime: 1.2, hitAt: 0.6, melee: false, art: 'staff', attack: 'spellcast', mana: 100, manaRegen: 4, skills: ['heal', 'bigheal'] },
+  mage: { name: '마법사', role: 'mage', hp: 130, armor: 0, spd: 3.1, range: 5.5, atk: 10, atkTime: 1.3, hitAt: 0.6, melee: false, art: 'mage', attack: 'spellcast', mana: 120, manaRegen: 5, skills: ['fireball', 'bolt'] },
   goblin: { name: '고블린', hp: 42, armor: 0, spd: 3.6, range: 1.1, atk: 8, atkTime: 0.9, hitAt: 0.5, melee: true, art: 'goblin', attack: 'slash', backMul: 1.5 },
   skel: { name: '해골', hp: 70, armor: 0, spd: 2.8, range: 1.1, atk: 12, atkTime: 1.0, hitAt: 0.5, melee: true, art: 'skel', attack: 'slash' },
   skel_archer: { name: '해골 궁수', hp: 48, armor: 0, spd: 2.6, range: 6, atk: 9, atkTime: 1.5, hitAt: 0.72, melee: false, art: 'skel_archer', attack: 'shoot', keepAway: 3 },
   ogre: { name: '오우거', hp: 2000, armor: 0.2, spd: 2.2, range: 1.8, atk: 44, atkTime: 1.8, hitAt: 0.6, melee: true, art: 'orc', attack: 'thrust', scale: 1.6, skills: ['slam'] },
 };
-const PARTY = ['knight', 'gs', 'archer', 'cleric'];
-const PARTY_SPOTS = [[7, 8], [6.5, 9.8], [4.2, 6.4], [3.8, 9.4]];
+// 파티 5명. 같은 직업을 여러 명 넣어도 된다 (전투장 [👥 파티]에서 바꾸면 이 배열이 바뀜). 자리는 순서대로
+const PARTY = ['knight', 'gs', 'archer', 'cleric', 'mage'];
+const PARTY_SPOTS = [[7, 8], [6.5, 9.8], [4.2, 6.4], [3.8, 9.4], [3.2, 7.9]];
 
 // 스킬. tags = 꼬리표. 머리(ai.js)는 스킬 이름이 아니라 꼬리표만 보고 언제 쓸지 정한다.
 //   새 스킬은 여기 한 줄만 적으면 된다 (꼬리표·숫자). 완전히 새로운 종류일 때만 ai.js 에 꼬리표 점수를 하나 더한다.
@@ -29,6 +31,8 @@ const SKILLS = {
   aimed: { n: '조준 사격', tags: ['강공격', '공격'], cd: 10, cast: 1.2, hitAt: 1, mult: 2.5, range: 6.5, anim: 'shoot' },
   heal: { n: '치유', tags: ['회복'], cd: 0, cast: 1, hitAt: 1, amount: 35, mana: 15, range: 5, anim: 'spellcast' },
   bigheal: { n: '큰 치유', tags: ['회복', '큰'], cd: 12, cast: 1.8, hitAt: 1, amount: 90, mana: 40, range: 5, anim: 'spellcast' },
+  fireball: { n: '화염구', tags: ['범위', '공격'], cd: 7, cast: 1.0, hitAt: 0.8, radius: 1.6, dmg: 40, mana: 25, range: 6, anim: 'spellcast' },
+  bolt: { n: '마력 화살', tags: ['강공격', '공격'], cd: 9, cast: 1.4, hitAt: 1, mult: 3, mana: 20, range: 6, anim: 'spellcast' },
   slam: { n: '내려찍기', tags: ['범위'], cd: 6, warn: 1.5, radius: 2.2, dmg: 110, reach: 4 },
 };
 
@@ -39,6 +43,7 @@ const PRIORITY = {
   dealer: ['피하기', '범위', '공격'],
   archer: ['피하기', '거리두기', '강공격', '공격'],
   healer: ['피하기', '회복', '거리두기', '공격'],
+  mage: ['피하기', '거리두기', '범위', '강공격', '공격'],
 };
 // 국면마다 우선순위를 바꾸는 곳 (없으면 역할 기본)
 const PHASE_PRIORITY = {
@@ -60,13 +65,13 @@ const BASE_BOARD = { crisisHp: 0.35, retreatHp: 0.25, manaReserve: 0.25 };
 const STYLES = {
   balance: { n: '균형', desc: '기본값', w: {}, board: {}, priority: {} },
   safe: { n: '안전 우선', desc: '힐 일찍, 거리 넉넉히, 마나 아끼기', w: { heal: { urg: 0.55 }, kite: 3.2, target: { danger: 0.5, kill: 0.1 } }, board: { crisisHp: 0.5, retreatHp: 0.4, manaReserve: 0.35 }, priority: {} },
-  simple: { n: '비교용: 생각 없음', desc: '피하기·스킬 없이 가까운 적만 치고, 힐만 함', w: { target: { danger: 0, kill: 0, near: 1, focus: 0 } }, board: { retreatHp: 0 }, priority: { tank: ['공격'], dealer: ['공격'], archer: ['공격'], healer: ['회복', '공격'] } },
+  simple: { n: '비교용: 생각 없음', desc: '피하기·스킬 없이 가까운 적만 치고, 힐만 함', w: { target: { danger: 0, kill: 0, near: 1, focus: 0 } }, board: { retreatHp: 0 }, priority: { tank: ['공격'], dealer: ['공격'], archer: ['공격'], healer: ['회복', '공격'], mage: ['공격'] } },
   rush: { n: '몰아치기', desc: '집중 공격, 후퇴 안 함, 마나 다 씀', w: { target: { focus: 0.45, kill: 0.35, danger: 0.2 }, kite: 1.8 }, board: { crisisHp: 0.25, retreatHp: 0, manaReserve: 0.1 }, priority: { tank: ['피하기', '공격', '보호', '방어'] } },
 };
 
 // 시험 상황
 const SCENARIOS = {
-  A: { n: 'A: 4 대 다수', units: ['goblin', 'goblin', 'goblin', 'goblin', 'goblin', 'goblin', 'skel', 'skel', 'skel', 'skel_archer', 'skel_archer', 'skel_archer'] },
+  A: { n: 'A: 파티 대 다수', units: ['goblin', 'goblin', 'goblin', 'goblin', 'goblin', 'goblin', 'skel', 'skel', 'skel', 'skel_archer', 'skel_archer', 'skel_archer'] },
   B: { n: 'B: 거대 적 1', units: ['ogre'] },
   C: { n: 'C: 거대 적 + 부하', units: ['ogre', 'goblin', 'goblin', 'goblin', 'goblin'] },
 };

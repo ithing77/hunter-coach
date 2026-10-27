@@ -17,6 +17,11 @@ arms/hands/gloves/thin
   라이선스: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
   출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites http://opengameart.org/content/lpc-clothing-updates
 
+beards/beard/winter
+  작가: bluecarrot16
+  라이선스: CC0
+  출처: https://opengameart.org/content/lpc-santa
+
 body/bodies/child
   작가: bluecarrot16, Benjamin K. Smith (BenCreating), ElizaWy, MuffinElZangano, Durrani, Nila122, kheftel, Stephen Challener (Redshrike)
   라이선스: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
@@ -171,6 +176,11 @@ hat/magic/celestial
   작가: Napsio (Vitruvian Studio), Michael Whitlock (bigbeargames), Tracy
   라이선스: CC-BY 3.0
   출처: https://opengameart.org/content/lpc-celestial-wizard-hats https://opengameart.org/content/lpc-expanded-hats-facial-helmets
+
+hat/magic/wizard
+  작가: Michael Whitlock (bigbeargames), Tuomo Untinen (reemax), JaidynReiman
+  라이선스: CC-BY-SA 3.0, GPL 2.0, GPL 3.0
+  출처: https://opengameart.org/content/lpc-items-and-game-effects https://opengameart.org/content/lpc-pointed-hats https://opengameart.org/content/lpc-expanded-hats-facial-helmets
 
 hat/visor/horned
   작가: bluecarrot16, Shaun Williams, Matthew Krohn (makrohn), Johannes Sjölund (wulax), Sander Frenken (castelonia)
