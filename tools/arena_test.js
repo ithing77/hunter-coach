@@ -2,7 +2,7 @@
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const ctx = { console, Math, Set, Map };
 vm.createContext(ctx);
-for (const f of ['data.js', 'sim.js', 'ai.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'arena', f), 'utf8'), ctx, { filename: f });
+for (const f of ['data.js', 'sheet.js', 'sim.js', 'ai.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'arena', f), 'utf8'), ctx, { filename: f });
 const scns = (process.argv[2] || 'all') === 'all' ? ['A', 'B', 'C'] : [process.argv[2]];
 const styles = (process.argv[3] || 'all') === 'all' ? ['balance', 'safe', 'rush', 'simple'] : [process.argv[3]];
 const N = +process.argv[4] || 30;
