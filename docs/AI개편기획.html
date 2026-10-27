@@ -1,0 +1,276 @@
+<title>헌터 감독 파티 AI 기획</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* 레이아웃: 작전판처럼 왼쪽 정렬 한 단, 역할은 색으로 구분, 표는 가로 스크롤 상자 안 */
+:root {
+  --bg: #f3f2ec; --paper: #fbfaf6; --ink: #22241f; --muted: #646a5c; --line: #d9d8cc; --accent: #9a6b12;
+  --tank: #2f69b3; --dps: #b8432f; --arch: #2e8a58; --heal: #a37a12;
+  --display: "Black Han Sans", "Malgun Gothic", sans-serif;
+  --body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1d19; --paper: #23261f; --ink: #ecebe3; --muted: #a3a796; --line: #393d33; --accent: #e0b24a;
+  --tank: #6fa3e8; --dps: #ee7d68; --arch: #5fc18b; --heal: #e2bc4f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1b1d19; --paper: #23261f; --ink: #ecebe3; --muted: #a3a796; --line: #393d33; --accent: #e0b24a;
+  --tank: #6fa3e8; --dps: #ee7d68; --arch: #5fc18b; --heal: #e2bc4f; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15.5px; line-height: 1.7; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.15; }
+h2 { font-size: 24px; }
+h3 { font-size: 16px; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; gap: 14px; min-width: 0; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--accent); }
+.lead { font-size: 17px; color: var(--muted); }
+.muted { color: var(--muted); }
+.scope { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.box { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.box ul { margin: 6px 0 0; padding-left: 20px; }
+.party { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.role { background: var(--paper); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.role .nm { font-family: var(--display); font-size: 21px; color: var(--c); }
+.role .job { font-size: 13px; color: var(--muted); }
+.stat { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; display: grid; grid-template-columns: auto 1fr; gap: 0 10px; }
+.stat b { font-weight: 500; color: var(--muted); }
+.role ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+.tank { --c: var(--tank); } .dps { --c: var(--dps); } .arch { --c: var(--arch); } .heal { --c: var(--heal); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 12.5px; color: var(--muted); font-weight: 600; letter-spacing: .03em; }
+td.k { font-weight: 700; white-space: nowrap; }
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.take { color: var(--arch); } .cut { color: var(--accent); } .drop { color: var(--muted); }
+code, .f { font-family: var(--mono); font-size: 13px; }
+.f { display: block; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; line-height: 1.8; overflow-x: auto; }
+pre.mermaid { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow-x: auto; margin: 0; }
+ol.steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+ol.steps li::marker { font-family: var(--mono); color: var(--accent); }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; color: var(--muted); max-width: 70ch; }
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:12px">
+  <div class="eyebrow">헌터 감독 · 개발 전 기획 · 2026-10-27</div>
+  <h1>4인 파티 AI 기획안</h1>
+  <p class="lead">탱커·딜러·궁수·힐러 네 명이 서로 역할을 나눠 싸우는 AI를 만들고, 화면 없이 수십 판을 돌려 잘 싸우는지 숫자로 확인한다. 받은 보고서의 구조를 빌리되, 우리 규모에 맞게 줄인다.</p>
+</header>
+
+<section>
+  <h2>이번에 하는 것과 안 하는 것</h2>
+  <div class="scope">
+    <div class="box"><h3>한다</h3><ul>
+      <li>헌터 4명 (탱커·딜러·궁수·힐러), 역할마다 스킬 1~2개</li>
+      <li>보고서 구조를 줄인 파티 AI</li>
+      <li>적 AI도 같이 개편 (어그로를 따라 움직이게)</li>
+      <li>전투 상황 3개로 자동 시험 + 관전 화면</li>
+    </ul></div>
+    <div class="box"><h3>나중에</h3><ul>
+      <li>감독이 작전을 내리는 방식 (카드·지도 찍기·성향 다이얼 중 미정). 이번엔 <b>손잡이 자리만</b> 만들어 둔다</li>
+      <li>경험으로 성장하기 (보정 자리만 만들어 둔다)</li>
+      <li>멀티, 탐험 지도와 합치기</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>파티 4명</h2>
+  <p class="muted">거리는 칸(타일 1칸) 단위. 수치는 첫 시험용이라 돌려 보고 고친다.</p>
+  <div class="party">
+    <div class="role tank"><div class="nm">탱커</div><div class="job">기사 · 칼과 방패 (지금 그림 그대로)</div>
+      <div class="stat"><b>체력</b>300 <b>방어</b>30% <b>속도</b>3.0 <b>사거리</b>1.25 <b>공격</b>14 / 0.9초</div>
+      <ul><li><b>도발</b>: 5칸 안 적 하나를 나에게 고정 (쿨 8초)</li><li><b>방패 막기</b>: 3초간 받는 피해 절반 (쿨 12초)</li></ul>
+      <div class="job">할 일: 적의 시선을 끌고, 동료를 노리는 적을 떼어 낸다</div></div>
+    <div class="role dps"><div class="nm">딜러</div><div class="job">검사 · 양손검 (새로 조합)</div>
+      <div class="stat"><b>체력</b>180 <b>방어</b>10% <b>속도</b>3.4 <b>사거리</b>1.3 <b>공격</b>24 / 1.0초</div>
+      <ul><li><b>회전 베기</b>: 주변 1.8칸 모두 공격 (쿨 9초)</li></ul>
+      <div class="job">할 일: 탱커가 잡아 둔 적을 빨리 줄인다</div></div>
+    <div class="role arch"><div class="nm">궁수</div><div class="job">궁수 · 활 (지금 그림 그대로)</div>
+      <div class="stat"><b>체력</b>140 <b>방어</b>0% <b>속도</b>3.3 <b>사거리</b>6.5 <b>공격</b>13 / 1.1초</div>
+      <ul><li><b>조준 사격</b>: 1.2초 조준 후 2.5배 피해 (쿨 10초)</li></ul>
+      <div class="job">할 일: 멀리서 위험한 적·원거리 적을 먼저 잡는다</div></div>
+    <div class="role heal"><div class="nm">힐러</div><div class="job">성직자 · 지팡이 (새로 조합)</div>
+      <div class="stat"><b>체력</b>150 <b>방어</b>0% <b>속도</b>3.1 <b>사거리</b>5 <b>마나</b>100 (초당 +4)</div>
+      <ul><li><b>치유</b>: 35 회복, 1초 시전, 마나 15</li><li><b>큰 치유</b>: 90 회복, 1.8초 시전, 마나 40 (쿨 12초)</li></ul>
+      <div class="job">할 일: 쓰러질 사람부터 살리고, 마나 25%는 위기용으로 아낀다</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>적</h2>
+  <div class="tbl"><table>
+    <tr><th>적</th><th>무엇을 노리나</th><th>특징</th></tr>
+    <tr><td class="k">고블린</td><td>위협 순, 단 힐러·궁수에게 1.5배 끌림</td><td>빠르고 약함. 탱커가 안 막으면 뒷줄로 파고든다</td></tr>
+    <tr><td class="k">오크</td><td>위협 순</td><td>느리고 단단함</td></tr>
+    <tr><td class="k">해골</td><td>위협 순</td><td>보통</td></tr>
+    <tr><td class="k">해골 궁수</td><td>위협 순</td><td>헌터가 3칸 안에 오면 쏘기보다 <b>도망이 먼저</b> (지금은 반대라 거의 안 도망감)</td></tr>
+    <tr><td class="k">오우거 (거대 적)</td><td>위협 순</td><td>체력 1200. <b>내려찍기</b>: 바닥에 1.5초 동안 원을 예고한 뒤 큰 피해. 피하거나 방패로 막아야 한다</td></tr>
+  </table></div>
+  <p class="note">LPC에는 큰 몬스터 그림이 없어서, 오우거는 일단 오크 그림을 1.6배 키워 쓴다. 딜러와 힐러 그림은 개발 전에 작업실에서 먼저 보여 드린다.</p>
+</section>
+
+<section>
+  <h2>보고서에서 무엇을 가져오나</h2>
+  <div class="tbl"><table>
+    <tr><th>보고서의 칸</th><th>우리 버전</th><th></th></tr>
+    <tr><td class="k">파티 공유 메모판</td><td>항목 6개만 (아래 표)</td><td><span class="pill take">가져옴</span></td></tr>
+    <tr><td class="k">전투 국면 (FSM)</td><td>8개 국면 → 5개 (모이기·교전·위기·후퇴·재집결)</td><td><span class="pill cut">줄임</span></td></tr>
+    <tr><td class="k">역할별 행동 트리</td><td>역할마다 위에서부터 확인하는 우선순위 목록 5~6줄</td><td><span class="pill cut">줄임</span></td></tr>
+    <tr><td class="k">점수로 고르기 (Utility)</td><td>표적 점수 4항목, 힐 점수 3항목, 자리 점수 4항목</td><td><span class="pill cut">줄임</span></td></tr>
+    <tr><td class="k">예약 (중복 막기)</td><td>힐 예약, 피해 예약(과잉 공격 막기), 도발 예약</td><td><span class="pill take">가져옴</span></td></tr>
+    <tr><td class="k">위협표 (어그로)</td><td>적마다 헌터별 위협 점수, 탱커 4배, 도발</td><td><span class="pill take">가져옴</span></td></tr>
+    <tr><td class="k">떨림 막기</td><td>표적은 1초 유지, 새 표적이 20% 이상 좋아야 바꿈</td><td><span class="pill take">가져옴</span></td></tr>
+    <tr><td class="k">자리 후보 고르기</td><td>주변 12곳을 찍어 점수가 가장 좋은 곳으로</td><td><span class="pill take">가져옴</span></td></tr>
+    <tr><td class="k">시전 끊기 · 디버프 해제 · 버스트 타이밍</td><td>스킬이 늘면 그때</td><td><span class="pill drop">뺌</span></td></tr>
+    <tr><td class="k">강화학습</td><td>점수에 ±15% 더하는 "경험 보정" 자리만 둠</td><td><span class="pill drop">자리만</span></td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>한 명이 생각하는 순서</h2>
+  <p class="muted">0.15초마다 (1초에 약 7번) 생각하고, 걷기·공격은 매 순간 이어서 한다. 생각을 너무 자주 하면 떨리고, 너무 드물면 굼뜨다.</p>
+<pre class="mermaid">
+flowchart TD
+  A[주변 보기: 적·동료 위치, 체력, 위험 표시] --> B[공유 메모판 고치기]
+  B --> C{파티 국면은?}
+  C --> D{내가 지금 위험한가?<br/>내려찍기 원 안 등}
+  D -- 예 --> E[피하기 · 방패 막기]
+  D -- 아니오 --> F[내 역할 우선순위 목록을<br/>위에서부터 확인]
+  F --> G[해당 줄의 후보들을 점수로 비교<br/>누구를 · 어디로]
+  G --> H{다른 동료가 이미 예약했나?}
+  H -- 예 --> I[다음으로 좋은 후보]
+  H -- 아니오 --> J[예약하고 실행]
+  I --> J
+</pre>
+</section>
+
+<section>
+  <h2>공유 메모판</h2>
+  <p class="muted">네 명이 각자 똑똑한 것보다, 같은 그림을 보고 움직이는 게 중요하다. 이 메모판이 감독 손잡이가 꽂힐 자리이기도 하다.</p>
+  <div class="tbl"><table>
+    <tr><th>항목</th><th>누가 쓰나</th><th>무엇에 쓰나</th></tr>
+    <tr><td class="k">집중 표적</td><td>파티 (점수가 가장 높은 적)</td><td>딜러·궁수가 우선 노림. 꼭 따라야 하는 건 아님</td></tr>
+    <tr><td class="k">탱커가 잡은 적</td><td>위협표</td><td>탱커는 놓친 적을 찾고, 딜러는 잡힌 적을 친다</td></tr>
+    <tr><td class="k">뒷줄 위협</td><td>파티</td><td>힐러·궁수를 노리는 적. 탱커 도발·딜러 지원 1순위</td></tr>
+    <tr><td class="k">힐 예약</td><td>힐러</td><td>이미 들어갈 회복량. 같은 사람에게 겹쳐 쓰지 않게</td></tr>
+    <tr><td class="k">피해 예약</td><td>공격하는 사람</td><td>곧 죽을 적에게 넷이 몰리지 않게</td></tr>
+    <tr><td class="k">모일 지점 · 후퇴 신호</td><td>파티 국면</td><td>후퇴할 때 각자 도망가지 않고 한 곳으로</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>파티 국면 5개</h2>
+<pre class="mermaid">
+stateDiagram-v2
+  모이기 --> 교전: 적 발견, 탱커가 먼저 들어감
+  교전 --> 위기: 누가 25% 아래, 또는 버틸 시간 2초 이하
+  위기 --> 교전: 위기 풀림
+  위기 --> 후퇴: 2명 쓰러짐, 또는 탱커·힐러가 쓰러짐
+  교전 --> 후퇴: 이길 수 없는 싸움 (예상 처치 시간 > 버틸 시간)
+  후퇴 --> 재집결: 모일 지점 도착
+  재집결 --> 교전: 4칸 안에 다 모이고 체력 회복
+</pre>
+  <p class="note">"위기"로 바뀌는 순간이 지금 시험판의 "동료 위기 멈춤"과 같은 자리다. 나중에 감독이 끼어들 타이밍으로 그대로 쓸 수 있다.</p>
+</section>
+
+<section>
+  <h2>역할별 우선순위</h2>
+  <p class="muted">위에서부터 확인해서 해당하는 첫 줄을 한다. 같은 줄 안에서 누구를·어디로는 점수로 고른다.</p>
+  <div class="tbl"><table>
+    <tr><th></th><th style="color:var(--tank)">탱커</th><th style="color:var(--dps)">딜러</th><th style="color:var(--arch)">궁수</th><th style="color:var(--heal)">힐러</th></tr>
+    <tr><td class="k">1</td><td>위험 피하기 / 방패 막기</td><td>위험 피하기</td><td>위험 피하기</td><td>위험 피하기</td></tr>
+    <tr><td class="k">2</td><td>뒷줄 노리는 적 도발·끼어들기</td><td>힐러를 노리는 적 치기</td><td>가까이 붙은 적에게서 거리 벌리기</td><td>쓰러질 동료 큰 치유</td></tr>
+    <tr><td class="k">3</td><td>놓친 적 다시 잡기</td><td>적 3명 이상 붙으면 회전 베기</td><td>원거리 적·위험한 적 조준 사격</td><td>일반 치유 (체력 60% 아래)</td></tr>
+    <tr><td class="k">4</td><td>적을 파티 반대쪽으로 돌려 세우기</td><td>집중 표적 치기</td><td>집중 표적 쏘기</td><td>안전한 자리로 옮기기</td></tr>
+    <tr><td class="k">5</td><td>잡은 적 계속 치기</td><td>가장 좋은 표적 치기</td><td>가장 좋은 표적 쏘기</td><td>마나 넉넉하면 약한 공격</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>점수 계산</h2>
+  <div class="scope">
+    <div class="box"><h3>표적 점수 (딜러·궁수·탱커)</h3>
+      <code class="f">위험도 × 0.35   (공격력, 뒷줄을 노리면 +)
+처치 쉬움 × 0.20 (남은 체력이 적을수록)
+가까움 × 0.25   (거리와 길이 막혔는지)
+집중 보너스 × 0.20 (메모판 집중 표적이면)
+− 과잉 공격     (예약된 피해가 남은 체력보다 많으면 크게 뺌)</code></div>
+    <div class="box"><h3>힐 점수 (힐러)</h3>
+      <code class="f">잃은 체력 × 0.45
+위급함 × 0.40   (최근 3초 받은 피해로 계산한
+                 "몇 초 버틸까"가 짧을수록)
+역할 중요도 × 0.15 (탱커가 조금 높음)
+− 이미 예약된 회복</code></div>
+    <div class="box"><h3>자리 점수 (모두)</h3>
+      <code class="f">역할 거리 맞음  (궁수는 탱커 뒤 5~6칸 등)
++ 안전          (위험 원 밖, 적과 떨어짐)
++ 동료 근처      (힐러 사거리 안)
+− 고립 − 걸어갈 거리</code></div>
+    <div class="box"><h3>떨림 막기</h3>
+      <code class="f">표적은 최소 1초 유지
+새 표적 점수가 20% 이상 높아야 바꿈
+자리도 0.5칸 이상 나아질 때만 옮김</code></div>
+  </div>
+</section>
+
+<section>
+  <h2>어그로 (위협표)</h2>
+  <code class="f">적마다 헌터별 위협 점수를 쌓는다
+  준 피해 × (탱커면 4, 아니면 1)
++ 회복량 × 0.5 (전투 중인 적들에게 나눠서)
+도발 = 그 적의 최고 위협 × 1.1 로 올림
+적은 지금 표적보다 위협이 15% 이상 높은 헌터가 생겨야 표적을 바꾼다
+전투 중엔 줄지 않고, 전투가 끝나면 비운다</code>
+  <p class="muted">이게 들어가야 "탱커가 막는다"가 진짜가 된다. 지금 적은 가까운 사람이나 약한 사람을 쫓을 뿐이라 막을 방법이 없다.</p>
+</section>
+
+<section>
+  <h2>감독 손잡이 자리 (방식은 나중에)</h2>
+  <p>감독이 어떤 방식으로 작전을 내리든, AI 쪽에서는 결국 세 군데 중 하나를 바꾸게 된다. 이번엔 이 세 곳을 바깥에서 바꿀 수 있게만 만들어 둔다.</p>
+  <div class="tbl"><table>
+    <tr><th>바꾸는 곳</th><th>예</th><th>어울리는 입력 방식</th></tr>
+    <tr><td class="k">점수 비중</td><td>"위험한 적 먼저" → 위험도 0.35 → 0.55</td><td>성향 다이얼, 작전 묶음(카드)</td></tr>
+    <tr><td class="k">메모판 강제값</td><td>"이 적 먼저", "여기로 모여", "후퇴"</td><td>지도에 찍기</td></tr>
+    <tr><td class="k">우선순위 순서</td><td>힐러: "치유보다 내 몸 먼저"</td><td>개인 작전(역할) 편집</td></tr>
+  </table></div>
+  <p class="muted">경험 보정도 같은 곳에 붙는다. 점수에 ±15% 안에서 조금씩 더해지는 값이다. 시험에서는 성향을 3개(균형·안전 우선·몰아치기)만 만들어서, 손잡이를 돌리면 싸움이 정말 달라지는지 본다.</p>
+</section>
+
+<section>
+  <h2>시뮬레이션</h2>
+  <div class="tbl"><table>
+    <tr><th>상황</th><th>적</th><th>보고 싶은 것</th></tr>
+    <tr><td class="k">A. 4 대 다수</td><td>고블린 4 · 해골 2 · 해골 궁수 2</td><td>탱커가 여럿을 잡아 두나, 고블린이 힐러에게 가면 막나</td></tr>
+    <tr><td class="k">B. 거대 적 1</td><td>오우거</td><td>내려찍기를 피하나, 힐이 탱커에게 잘 들어가나</td></tr>
+    <tr><td class="k">C. 거대 적 + 부하</td><td>오우거 · 고블린 3</td><td>탱커는 오우거, 딜러는 부하 정리처럼 나눠 맡나</td></tr>
+  </table></div>
+  <p>탐험 지도와 따로, <b>작은 전투장</b>에서 시험한다. 보고서 조언대로 매 판 적 위치·구성·피해를 조금씩 흔들어, 운이나 외운 패턴이 아니라 진짜 판단으로 이기는지 본다. 상황마다 30판씩 돌려서 아래를 잰다.</p>
+  <div class="scope">
+    <div class="box"><h3>결과</h3><ul><li>승률, 전투 시간, 쓰러진 수</li><li>성향 3개끼리 결과 차이</li></ul></div>
+    <div class="box"><h3>역할을 잘했나</h3><ul><li>적이 탱커를 노린 시간 비율</li><li>힐러·궁수가 맞은 피해</li><li>내려찍기 피한 비율</li></ul></div>
+    <div class="box"><h3>떨림·낭비</h3><ul><li>표적 바꾼 횟수</li><li>겹친 힐, 죽은 적에게 날린 피해</li><li>걷기↔멈춤 바뀐 횟수</li></ul></div>
+  </div>
+  <p><b>관전 화면</b>도 만든다. 머리 위에 지금 하는 생각을 짧게 띄우고 (예: "힐러 지키러", "원 피하기"), 옆에 메모판과 위협표를 보여 준다. 왜 그렇게 움직였는지 눈으로 확인하기 위해서다.</p>
+</section>
+
+<section>
+  <h2>만드는 순서</h2>
+  <p class="muted">한 단계마다 자동 시험 숫자를 보여 드리고 다음으로 간다.</p>
+  <ol class="steps">
+    <li>딜러·힐러 그림 조합 → 작업실에서 확인</li>
+    <li>전투장 + 4명 + 위협표 + 적 AI 개편 (상황 A)</li>
+    <li>역할 우선순위 + 표적 점수 + 떨림 막기 + 피해 예약</li>
+    <li>힐러 치유 + 힐 예약 + 마나 아끼기</li>
+    <li>오우거와 내려찍기, 위험 피하기 (상황 B·C)</li>
+    <li>파티 국면 (위기·후퇴·재집결) + 자리 후보 고르기</li>
+    <li>성향 3개로 손잡이 시험 + 관전 화면</li>
+  </ol>
+</section>
+
+</div>
