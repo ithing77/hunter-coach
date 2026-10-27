@@ -191,7 +191,7 @@ function attackTick(G, u, dt) {
     u.hitDone = true;
     if (t && alive(t)) {
       if (u.d.melee) { if (dist(u, t) <= u.d.range + 0.6) dealDamage(G, u, t, u.d.atk); }
-      else G.shots.push({ x: u.x, y: u.y - 0.4, t, from: u, dmg: u.d.atk, kind: u.d.role === 'healer' ? 'bolt' : 'arrow' });
+      else G.shots.push({ x: u.x, y: u.y - 0.4, t, from: u, dmg: u.d.atk, kind: u.d.role === 'healer' || u.d.role === 'mage' ? 'bolt' : 'arrow' });
     }
   }
   if (u.atkT >= u.d.atkTime) { u.state = 'idle'; u.atkCd = u.d.melee ? 0.15 : 0.3; }

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>스킬 작업실</title>
+<style>
+  :root { --bg: #1d1f1a; --panel: #2a2c25; --line: #3c3f35; --ink: #f1efe8; --muted: #a9a79c; --accent: #f0b429; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  button { font-family: inherit; cursor: pointer; }
+  #app { max-width: 1180px; margin: 0 auto; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 14px; }
+  h1 { grid-column: 1 / 3; margin: 0; font-size: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  h1 small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 2px; }
+  h1 .sp { flex: 1; }
+  h1 a { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 14px; text-decoration: none; }
+  .panel { background: var(--panel); border-radius: 12px; padding: 12px 14px; }
+  #jobs { grid-column: 1 / 3; display: flex; gap: 8px; flex-wrap: wrap; }
+  .job { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 10px; padding: 4px 12px 4px 4px; display: flex; gap: 6px; align-items: center; font-size: 14px; font-weight: 700; }
+  .job canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+  .job small { color: var(--muted); font-weight: 400; font-size: 11.5px; }
+  .job.on { border-color: var(--accent); background: #4a4222; }
+  #field { width: 100%; height: 440px; display: block; border-radius: 10px; background: #14160f; }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: 13px; }
+  .row .lbl { color: var(--muted); margin-right: 2px; }
+  .t { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .t.on { border-color: var(--accent); background: #4a4222; }
+  #now { font-size: 13px; color: var(--muted); margin-top: 8px; min-height: 18px; }
+  #now b { color: var(--ink); }
+  .sk { background: #33352d; border: 1.5px solid #4a4d42; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; cursor: pointer; }
+  .sk.on { border-color: var(--accent); background: #4a4222; }
+  .sk .nm { font-weight: 900; font-size: 15px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .tag { font-size: 11px; font-weight: 700; background: #20221c; color: #cfe3a8; border-radius: 6px; padding: 1px 6px; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 8px; font-size: 12px; margin-top: 5px; color: var(--muted); }
+  .nums b { color: var(--ink); font-weight: 700; }
+  .desc { font-size: 12.5px; margin-top: 5px; line-height: 1.5; }
+  .when { font-size: 12px; color: #ffe27a; margin-top: 3px; line-height: 1.5; }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+  @media (max-width: 900px) { #app { grid-template-columns: 1fr; } h1, #jobs { grid-column: 1; } #field { height: 300px; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>✨ 스킬 작업실 <small>직업마다 스킬 시전 동작과 이펙트를 게임 안 모습 그대로</small><span class="sp"></span>
+    <a href="workshop.html">🎬 동작 작업실</a>
+    <a href="https://docs.google.com/spreadsheets/d/15sPuuAGJbLvGQA6hZ4GwZ3AP6FiIYGSPtr0_9lx9ZLg/edit" target="_blank">📊 스킬 시트</a>
+    <a href="arena.html?scn=custom" target="_blank">⚔ 테스트 아레나</a></h1>
+  <div class="panel" id="jobs"></div>
+  <div>
+    <div class="panel">
+      <canvas id="field"></canvas>
+      <div id="now"></div>
+      <div class="row"><span class="lbl">속도</span>
+        <button class="t sp" data-s="0.25">¼</button><button class="t sp" data-s="0.5">½</button><button class="t sp on" data-s="1">1배</button>
+        <button class="t on" id="loop">반복</button><button class="t" id="again">↺ 다시</button>
+        <span class="lbl" style="margin-left:10px">보기</span><button class="t on" id="lines">표적 선</button>
+      </div>
+      <div class="note">게임과 같은 코드(arena/sim.js)로 스킬을 한 번 써서 보여 줘요. 수치는 스킬 시트에서 온 값이에요. 허수아비 몬스터는 체력을 크게 해서 안 쓰러지게 했어요.<br>노란 막대 = 시전 시간 · 하얀/주황/빨간 고리 = 범위 · 숫자 = 피해(흰색)·회복(초록)</div>
+    </div>
+  </div>
+  <div class="panel" id="list"></div>
+</div>
+<script src="arena/data.js"></script>
+<script src="arena/sheet.js"></script>
+<script src="arena/sim.js"></script>
+<script src="arena/ai.js"></script>
+<script src="arena/view.js"></script>
+<script>
+// 스킬 작업실: 직업 탭 → 스킬 목록 → 고른 스킬을 작은 판에서 한 번 시전하고 되풀이한다.
+//   판은 전투장 규칙(sim.js)·그림(view.js)을 그대로 쓰고, 머리(ai.js)만 끄고 이 파일이 "지금 이 스킬 써"를 시킨다.
+ARENA.w = 12; ARENA.h = 7;
+const $ = id => document.getElementById(id);
+const ROLE_N = { tank: '탱커', dealer: '딜러', archer: '궁수', healer: '힐러', mage: '마법' };
+// 꼬리표별로 머리가 언제 쓰는지 (ai.js SCORE 를 사람 말로)
+const WHEN = {
+  '보호': '다른 헌터, 특히 뒷줄을 노리는 적이 많을수록 써요. 위기 때는 더 빨리 써요.',
+  '방어': '피하지 못할 내려찍기가 오거나, 여러 마리에게 맞거나, 체력이 줄었을 때 써요.',
+  '범위': '범위 안에 적이 2마리 이상일 때 써요. 큰 적이면 하나라도 써요.',
+  '강공격': '체력이 많은 적에게 써요. 근접 적이 3.5칸 안이면 조준이 위험해서 안 써요.',
+  '회복': '빠진 체력·급함·역할 점수가 제일 높은 동료에게 써요. 큰 치유는 많이 빠졌거나 급할 때만 써요.',
+};
+const MONSTER_WHEN = { slam: '표적이 4칸 안에 있으면 쿨타임마다 써요. 1.5초 전에 바닥에 빨간 원으로 예고해요.' };
+const JOBS = Object.keys(UNITS).filter(k => UNITS[k].role || (UNITS[k].skills || []).length);
+let job = JOBS[0], entry = 'basic', speed = 1, loop = true, G = null, D = null, last = 0;
+
+function descOf(k, d) {
+  if (k === 'basic') return d.melee ? `가까이에서 ${d.atk} 피해. ${d.atkTime}초마다 한 번.` : `${d.range}칸 밖에서 ${d.role === 'healer' || d.role === 'mage' ? '마법 구슬' : '화살'}로 ${d.atk} 피해. ${d.atkTime}초마다 한 번.`;
+  const s = SKILLS[k], out = [];
+  if (k === 'taunt') out.push(`둘레 ${s.radius}칸의 적이 ${s.force}초 동안 나만 노려요.`);
+  else if (k === 'block') out.push(`${s.dur}초 동안 받는 피해가 ${Math.round(s.reduce * 100)}% 줄어요.`);
+  else if (s.warn) out.push(`${s.warn}초 예고 뒤 표적 자리 ${s.radius}칸 안에 ${s.dmg} 피해.`);
+  else if (s.radius && s.dmg) out.push(s.range ? `${s.range}칸 안 표적 자리에 터져 둘레 ${s.radius}칸에 ${s.dmg} 피해.` : `내 둘레 ${s.radius}칸의 적 모두에게 ${s.dmg} 피해.`);
+  else if (s.mult) out.push(`${s.range}칸 안 적 하나에게 기본 공격(${d.atk})의 ${s.mult}배 = ${Math.round(d.atk * s.mult)} 피해.`);
+  else if (s.amount) out.push(`${s.range}칸 안 동료 하나를 ${s.amount} 회복.`);
+  if (s.cast) out.push(`${s.cast}초 동안 시전하고 그동안 못 움직여요.`);
+  return out.join(' ');
+}
+function nums(k, d) {
+  const s = k === 'basic' ? { cd: d.atkTime, range: d.range } : SKILLS[k], r = [];
+  const add = (n, v, u) => { if (v !== undefined && v !== '' && v !== 0 || n === '쿨타임') r.push(`<span>${n} <b>${v}${u || ''}</b></span>`); };
+  add(k === 'basic' ? '간격' : '쿨타임', s.cd, '초'); add('시전', s.cast, '초'); add('사거리', s.range, '칸'); add('범위', s.radius, '칸');
+  add('피해', k === 'basic' ? d.atk : s.dmg); add('배율', s.mult, '배'); add('회복', s.amount); add('마나', s.mana); add('지속', s.dur || s.force, '초');
+  return r.join('');
+}
+function buildJobs() {
+  $('jobs').innerHTML = JOBS.map(k => { const d = UNITS[k]; return `<button class="job" data-j="${k}"><canvas id="jp-${k}" width="40" height="40"></canvas><span>${d.name}<br><small>${ROLE_N[d.role] || '몬스터'} · 스킬 ${(d.skills || []).length}개</small></span></button>`; }).join('');
+  for (const b of document.querySelectorAll('.job')) b.onclick = () => { job = b.dataset.j; entry = (UNITS[job].skills || [])[0] || 'basic'; render(); };
+}
+function render() {
+  for (const b of document.querySelectorAll('.job')) b.classList.toggle('on', b.dataset.j === job);
+  if (View.ready) for (const k of JOBS) View.portrait($('jp-' + k), UNITS[k].art);
+  const d = UNITS[job], list = [...(d.skills || []), 'basic'];
+  $('list').innerHTML = `<div style="font-weight:900;margin-bottom:8px">${d.name} <span style="color:var(--muted);font-weight:400;font-size:12.5px">체력 ${d.hp} · 방어 ${Math.round(d.armor * 100)}%${d.mana ? ` · 마나 ${d.mana} (초당 +${d.manaRegen})` : ''}</span></div>` +
+    list.map(k => { const s = k === 'basic' ? null : SKILLS[k];
+      return `<div class="sk${k === entry ? ' on' : ''}" data-k="${k}"><div class="nm">${s ? s.n : '기본 공격'} ${(s ? s.tags : []).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        <div class="nums">${nums(k, d)}</div><div class="desc">${descOf(k, d)}</div>
+        <div class="when">🧠 ${k === 'basic' ? '쓸 스킬이 없을 때 표적 점수(위험·막타·가까움·집중)가 제일 높은 적을 쳐요.' : MONSTER_WHEN[k] || WHEN[s.tags[0]] || ''}</div></div>`; }).join('') +
+    `<div class="note">숫자를 바꾸려면 [📊 스킬 시트]를 고친 뒤 대화창에 "시트 반영해 줘".</div>`;
+  for (const b of document.querySelectorAll('.sk')) b.onclick = () => { entry = b.dataset.k; render(); };
+  scene();
+}
+
+// ---------- 시연 판 ----------
+// 스킬 종류마다 허수아비 자리를 정한다: 근접 = 바로 옆, 원거리 = 5칸 앞에 뭉쳐서, 회복 = 다친 동료
+function scene() {
+  const d = UNITS[job], s = entry === 'basic' ? null : SKILLS[entry], monster = !d.role;
+  const C = { x: 3.5, y: 3.5 };
+  const near = [[4.8, 2.7], [5.0, 3.6], [4.6, 4.5]], far = [[8.5, 2.8], [9.2, 3.6], [8.6, 4.4]], mid = [[6.6, 2.3], [7.1, 3.6], [6.7, 4.9]];
+  const close = entry === 'basic' ? d.melee : entry === 'whirl' || entry === 'block' || entry === 'slam';
+  const spots = monster ? [[5.2, 3.4], [6.2, 4.4], [8.2, 3.4]] : entry === 'taunt' ? mid : close ? near : far;
+  const dummy = monster ? ['knight', 'gs', 'archer'] : ['goblin', 'goblin', 'goblin'];
+  const h = [{ kind: job, x: C.x, y: C.y }], e = [];
+  if (s && s.amount) h.push({ kind: 'knight', x: 6.2, y: 3.5 });
+  else if (entry === 'taunt') h.push({ kind: 'archer', x: 1.6, y: 5.6 });
+  else spots.forEach((p, i) => e.push({ kind: dummy[i], x: p[0], y: p[1] }));
+  if (entry === 'taunt') mid.forEach(p => e.push({ kind: 'goblin', x: p[0], y: p[1] }));
+  G = newBattle('custom', 'balance', 7, { h, e });
+  const caster = G.units[0];
+  for (const u of G.units) { u.face = u.team === 'h' ? 3 : 1; if (u !== caster && u.team === 'e') { u.hp = u.max = 999; } }
+  if (monster) for (const u of G.units) if (u !== caster) { u.hp = u.max = 999; }
+  const ally = G.units.find(u => u.team === 'h' && u !== caster);
+  if (ally && s && s.amount) ally.hp = Math.round(ally.max * 0.35);
+  // 도발·방패는 적이 실제로 움직이고 때려야 보이므로 적을 움직인다
+  const act = entry === 'taunt' || entry === 'block';
+  if (entry === 'taunt') for (const u of G.units.filter(u => u.team === 'e')) { u.threat.set(ally.id, 50); u.target = ally; }
+  if (entry === 'block') for (const u of G.units.filter(u => u.team === 'e')) u.threat.set(caster.id, 50);
+  const hold = s ? (s.dur || s.force || 0) : 0;
+  D = { caster, ally, act, T: 0, fireAt: entry === 'taunt' ? 1.4 : act ? 0.8 : 0.6, fired: false, endAt: null, hold };
+  $('now').innerHTML = `<b>${d.name}</b> · ${s ? s.n : '기본 공격'}${s && s.anim ? ` · 동작 <b>${s.anim}</b>` : entry === 'basic' ? ` · 동작 <b>${d.attack}</b>` : ''}`;
+}
+function fire() {
+  const c = D.caster, t = G.units.find(u => u.team !== c.team) || c;
+  G.me = c.team;
+  if (entry === 'basic') { startAttack(G, c, D.ally && !t ? D.ally : t); return; }
+  const s = SKILLS[entry];
+  c.say = s.n; c.sayT = 1.6;
+  if (s.warn) {   // 몬스터 내려찍기 (enemyTick 과 같은 방법)
+    c.state = 'slam'; c.animT = 0; c.face = faceOf(t.x - c.x, t.y - c.y);
+    G.warns.push({ x: t.x, y: t.y, r: s.radius, T: 0, warn: s.warn, by: c, dmg: s.dmg, done: false, inside: [] });
+    return;
+  }
+  c.mana = c.d.mana || 0; c.cd = {};
+  const foes = G.units.filter(u => u.team !== c.team);
+  const tgt = s.amount ? D.ally : s.radius && s.range ? foes[1] || foes[0] : s.range ? foes[0] : c;
+  startCast(G, c, entry, tgt);
+}
+function tick(dt) {
+  D.T += dt; G.t += dt;
+  if (!D.fired && D.T >= D.fireAt) { D.fired = true; fire(); }
+  for (const u of G.units) {
+    G.me = u.team;
+    u.animT += dt; u.walkT = Math.max(0, u.walkT - dt); u.sayT -= dt;
+    if (!alive(u)) continue;
+    u.atkCd -= dt; u.blockT -= dt; u.forcedT -= dt;
+    for (const k in u.cd) u.cd[k] -= dt;
+    if (u.state === 'attack') { attackTick(G, u, dt); continue; }
+    if (u.state === 'cast') { castTick(G, u, dt); continue; }
+    if (u.state === 'slam') continue;
+    if (D.act && u.team === 'e') enemyTick(G, u, dt);
+  }
+  G.me = 'h';
+  separate(G); shotsStep(G, dt); warnsStep(G, dt);
+  for (const f of G.fx) f.t += dt;
+  G.fx = G.fx.filter(f => f.t < (f.life || 1));
+  const busy = D.caster.state !== 'idle' || G.shots.length || G.warns.length || G.fx.length;
+  if (D.fired && !busy && D.endAt === null) D.endAt = D.T + Math.max(1, D.hold + 0.6);
+  if (D.endAt !== null && D.T >= D.endAt && loop) scene();
+}
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (G && View.ready) { let a = dt * speed; while (a > 0) { const h = Math.min(STEP, a); tick(h); a -= h; } View.draw(G, D.caster); }
+  requestAnimationFrame(frame);
+}
+for (const b of document.querySelectorAll('.sp')) b.onclick = () => { speed = +b.dataset.s; document.querySelectorAll('.sp').forEach(x => x.classList.toggle('on', x === b)); };
+$('loop').onclick = () => { loop = !loop; $('loop').classList.toggle('on', loop); if (loop && D.endAt !== null) scene(); };
+$('again').onclick = () => scene();
+$('lines').onclick = () => { View.opt.lines = !View.opt.lines; $('lines').classList.toggle('on', View.opt.lines); };
+const q = new URLSearchParams(location.search).get('job');
+if (q && JOBS.includes(q)) job = q;
+entry = (UNITS[job].skills || [])[0] || 'basic';
+buildJobs(); render();
+View.init($('field')).then(() => { render(); last = performance.now(); requestAnimationFrame(frame); });
+</script>
+</body>
+</html>
