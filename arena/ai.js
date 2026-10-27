@@ -131,6 +131,7 @@ function rateTargets(G, u) {
   const B = G.board, W = G.style.w.target, es = liveFoes(G);
   if (!es.length) return [];
   const maxDps = Math.max(...es.map(e => e.d.atk / e.d.atkTime));
+  const meleeLeft = es.some(e => e.d.melee);
   return es.map(e => {
     const myHit = u.d.atk * (1 - e.d.armor), left = e.hp - (B.pending.get(e.id) || 0);
     let danger = (e.d.atk / e.d.atkTime) / maxDps;
@@ -141,11 +142,14 @@ function rateTargets(G, u) {
     const near = 1 - clamp(Math.max(0, dist(u, e) - u.d.range) / 8, 0, 1);
     const focus = e === B.focus ? 1 : 0;
     const over = left <= 0 ? 0.6 : 0;   // 이미 날아가는 공격으로 죽을 적
-    const v = W.danger * danger + W.kill * kill + W.near * near + W.focus * focus - over;
-    return { e, v, parts: { danger, kill, near, focus, over } };
+    // 도망치는 적: 근접 헌터가 쫓으면 계속 달아나 다른 적까지 끌고 다닌다. 근접 적이 남아 있으면 반만 본다
+    //   (원거리 적만 남으면 그땐 잡으러 간다)
+    const flee = u.d.melee && e.d.keepAway && meleeLeft ? 0.5 : 1;
+    const v = (W.danger * danger + W.kill * kill + W.near * near + W.focus * focus) * flee - over;
+    return { e, v, parts: { danger, kill, near, focus, over, flee } };
   }).sort((a, b) => b.v - a.v);
 }
-const fmtT = r => `위험 ${r.parts.danger.toFixed(2)} · 막타 ${r.parts.kill.toFixed(2)} · 가까움 ${r.parts.near.toFixed(2)} · 집중 ${r.parts.focus}` + (r.parts.over ? ' · 이미 죽을 적 −0.6' : '');
+const fmtT = r => `위험 ${r.parts.danger.toFixed(2)} · 막타 ${r.parts.kill.toFixed(2)} · 가까움 ${r.parts.near.toFixed(2)} · 집중 ${r.parts.focus}` + (r.parts.flee < 1 ? ' · 도망치는 적 ×0.5' : '') + (r.parts.over ? ' · 이미 죽을 적 −0.6' : '');
 function warnOn(G, p, pad) { return G.warns.find(w => !w.done && dist(w, p) < w.r + (pad || 0.3)); }
 function incomingDps(G, h) {
   let v = 0;
@@ -207,14 +211,17 @@ const SCORE = {
     if (!a.skill) return null;
     const s = SKILLS[a.skill], nr = notReady(u, a.skill);
     if (nr) return { label: s.n, score: 0, why: nr };
-    const reach = liveFoes(G).filter(e => e.target && e.target !== u && e.forcedT <= 0 && dist(e, u) <= s.radius + 3);
+    // 도망치는 적은 이미 범위 안일 때만 센다 (쫓아가서 도발하면 계속 달아남)
+    const reach = liveFoes(G).filter(e => e.target && e.target !== u && e.forcedT <= 0 && dist(e, u) <= (e.d.keepAway ? s.radius : s.radius + 3));
     const back = reach.filter(e => isBack(e.target));
     if (!reach.length) return { label: s.n, score: 0, why: '나 말고 다른 헌터를 노리는 적 없음' };
     let v = 0.12 * reach.length + 0.25 * back.length;
     if (G.board.phase === 'crisis') v *= 1.3;
-    const c = back.length ? nearest(u, back) : nearest(u, reach);
+    const stay = reach.filter(e => !e.d.keepAway), sb = stay.filter(e => isBack(e.target));
+    const c = sb.length ? nearest(u, sb) : stay.length ? nearest(u, stay) : nearest(u, reach);
+    const walk = c.d.keepAway ? s.radius : s.radius - 1;   // 도망치는 적 쪽으로는 더 다가가지 않고 그 자리에서 도발
     return { label: `${s.n} (${reach.length}마리)`, short: `📢 ${s.n}`, score: Math.min(1, v), why: `다른 헌터를 노리는 적 ${reach.length} · 그중 뒷줄 ${back.length}${G.board.phase === 'crisis' ? ' · 위기 ×1.3' : ''}`,
-      plan: { kind: 'skill', skill: a.skill, target: c, reach: s.radius - 1 } };
+      plan: { kind: 'skill', skill: a.skill, target: c, reach: walk } };
   },
   // 나에게 큰 피해가 오고 있으면 막기
   '방어'(G, u, a) {
