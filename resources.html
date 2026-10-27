@@ -88,7 +88,7 @@ const img = url => imgs[url] || (imgs[url] = Object.assign(new Image(), { src: u
 
 async function load(t) {
   if (data[t.key]) return data[t.key];
-  let list = await (await fetch(A + t.json)).json();
+  let list = await (await fetch(A + t.json, { cache: 'no-cache' })).json();
   if (t.key === 'gallery') list = list.flatMap(p => p.files.map(f => ({ ...f, id: f.src, packInfo: { name: p.name, author: p.name, license: p.license, id: p.id } })));
   else list = list.map(x => ({ ...x, src: x.src || (x.anims && x.anims[0].src) }));
   for (const x of list) { x.base = t.base; x.packInfo = x.packInfo || { name: '?', author: '?', license: '?' }; }
