@@ -13,5 +13,8 @@
 LPC 생성기 저장소(부분만 받은 것)가 `C:\AI\_lpc\repo` 에 있다. 헌터 옷·무기는 `tools/build_hunters.py` 의 HUNTERS 표에서 고른 뒤:
 `python -I tools/build_hunters.py C:/AI/_lpc/repo`
 
+작업실(workshop.html)의 [🧩 캐릭터 만들기] = 공식 LPC 생성기를 그대로 띄운 화면. 거기서 "ZIP: Split by animation" 으로 받은 파일을 가져오기:
+`python -I tools/import_generator.py latest <id> <이름> [설명]` (latest = 내려받기 폴더의 가장 최근 압축) → art/showcase/<id>/ + sets.json, 그다음 `python -I tools/credits_all.py C:/AI/_lpc/repo` 로 제작자 목록 갱신
+
 ## 확인 도구
 `node tools/autohunt.js 30 none` (명령 없이) / `node tools/autohunt.js 30 smart` (위험한 헌터에게 회피·가드)
