@@ -207,15 +207,20 @@ function heroPlan(G, u) {
       // 대형 기준점이 적 쪽으로 천천히 전진, 기사는 그 앞, 궁수는 그 뒤
       if (!G.form) G.form = { x: party.x, y: party.y };
       const toC = unitv(C.x - G.form.x, C.y - G.form.y), dC = hyp(C.x - G.form.x, C.y - G.form.y);
-      if (dC > 5) { G.form.x += toC.x * 0.6 * STEP; G.form.y += toC.y * 0.6 * STEP; }
+      const FORM_SPD = 1.2, advancing = dC > 5;
+      if (u === heroes(G)[0] && advancing) { G.form.x += toC.x * FORM_SPD * STEP; G.form.y += toC.y * FORM_SPD * STEP; }   // 한 틱에 한 번만 전진
+      const follow = advancing ? FORM_SPD : 0;   // 기준점 속도에 맞춰 같이 걷기
+      const onlyRanged = !foes.some(e => e.d.melee);   // 원거리 적만 남으면 버티지 말고 잡으러 간다
       if (u.kind === 'knight') {
         const threat = A ? nearest(A, foes) : nearest(u, foes);
         if (threat && A && hyp(threat.x - A.x, threat.y - A.y) < 4.5) return { target: threat, moveTo: threat };
         const t = nearest(u, foes);
-        return { target: inRange(t, u.d.range + 0.3) ? t : null, moveTo: { x: G.form.x + toC.x * 1.3, y: G.form.y + toC.y * 1.3 } };
+        if (onlyRanged && t) return { target: t, moveTo: t };
+        return { target: inRange(t, u.d.range + 0.3) ? t : null, moveTo: { x: G.form.x + toC.x * 1.3, y: G.form.y + toC.y * 1.3, follow } };
       }
       const t = (K && K.target && alive(K.target) && inRange(K.target, u.d.range)) ? K.target : nearest(u, pool);
-      return { target: t, moveTo: { x: G.form.x - toC.x * 1.6, y: G.form.y - toC.y * 1.6 } };
+      if (onlyRanged && t) return { target: t, moveTo: kite(2.6, u.d.range - 0.5, t) };
+      return { target: t, moveTo: { x: G.form.x - toC.x * 1.6, y: G.form.y - toC.y * 1.6, follow } };
     }
     case 'spread': {
       const t = nearest(u, pool);
