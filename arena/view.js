@@ -3,7 +3,7 @@
 const View = (() => {
   let cv, cx, art = {}, ready = false, S = 1, ox = 0, oy = 0;
   const FPS = { walk: 10, idle: 2, combat_idle: 2, hurt: 8 };
-  const opt = { lines: true, bubbles: true };
+  const opt = { lines: true, bubbles: true, zoom: 1 };   // zoom = 캐릭터 크기 (작게 하면 판 위의 말처럼 내려다보는 느낌)
 
   async function init(canvas) {
     cv = canvas; cx = cv.getContext('2d');
@@ -91,7 +91,7 @@ const View = (() => {
     if (opt.bubbles) for (const u of G.units) if (u.team === 'h' && alive(u) && u.say) drawBubble(u, u === sel);
   }
   function drawUnit(G, u, isSel) {
-    const A = art[u.d.art], p = P(u.x, u.y), sc = (u.d.scale || 1) * S;
+    const A = art[u.d.art], p = P(u.x, u.y), sc = (u.d.scale || 1) * S * opt.zoom;
     let anim, row = u.face, frame, hold = false, prog = null;
     if (u.state === 'down' || u.state === 'dead') { anim = 'hurt'; hold = true; }
     else if (u.state === 'attack') { anim = u.d.attack; prog = u.atkT / u.d.atkTime; }
@@ -112,11 +112,14 @@ const View = (() => {
     else if (u.team === 'h' && alive(u)) { cx.strokeStyle = '#7fd4ff'; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(p.x, p.y + 2 * sc, 13 * sc, 5 * sc, 0, 0, 7); cx.stroke(); }
     if (u.state === 'dead') cx.globalAlpha = Math.max(0, 1 - u.deadT / 3);
     if (u.state === 'down') cx.globalAlpha = 0.55;
+    // 작게 그릴 땐 점을 섞어서 줄인다 (그냥 줄이면 얇은 선이 끊기고 걸을 때 지글거림)
+    cx.imageSmoothingEnabled = sc < 0.95;
     cx.drawImage(A.img[anim], frame * Z, row * Z, Z, Z, p.x - (32 + pad) * sc, p.y - (57 + pad) * sc, Z * sc, Z * sc);
+    cx.imageSmoothingEnabled = false;
     cx.globalAlpha = 1;
     if (u.blockT > 0 && alive(u)) { cx.fillStyle = 'rgba(156,199,255,.35)'; cx.strokeStyle = '#9cc7ff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(p.x, p.y - 20 * sc, 22 * sc, 0, 7); cx.fill(); cx.stroke(); }
     if (u.state === 'dead') return;
-    const w = 26 * sc, top = p.y - 52 * sc, r = u.hp / u.max;
+    const w = Math.max(20, 26 * sc), top = p.y - 52 * sc, r = u.hp / u.max;
     if (u.team === 'h' || u.hp < u.max) {
       cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(p.x - w / 2 - 1, top, w + 2, 5);
       cx.fillStyle = u.team === 'h' ? (r > 0.5 ? '#4cc36b' : r > 0.25 ? '#f0b429' : '#e5533d') : '#e5533d'; cx.fillRect(p.x - w / 2, top + 1, w * r, 3);
@@ -125,9 +128,9 @@ const View = (() => {
     if (u.state === 'cast') { const s = SKILLS[u.cast.k], k = u.cast.T / s.cast; cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(p.x - w / 2 - 1, p.y + 6 * sc, w + 2, 5); cx.fillStyle = '#ffe27a'; cx.fillRect(p.x - w / 2, p.y + 7 * sc, w * k, 3); }
   }
   function drawBubble(u, isSel) {
-    const p = P(u.x, u.y), sc = S, text = u.say;
+    const p = P(u.x, u.y), sc = S * opt.zoom, text = u.say;
     const fade = isSel ? 1 : clamp(u.sayT / 0.4, 0.35, 1);
-    cx.font = `700 ${Math.round(11 * Math.max(0.85, sc))}px "Malgun Gothic", sans-serif`;
+    cx.font = `700 ${Math.round(11 * Math.max(0.85, S))}px "Malgun Gothic", sans-serif`;
     const tw = cx.measureText(text).width + 10, h = 17, x = p.x - tw / 2, y = p.y - 72 * sc - h;
     cx.globalAlpha = fade;
     cx.fillStyle = isSel ? 'rgba(255,240,180,.97)' : 'rgba(255,255,255,.92)'; cx.strokeStyle = 'rgba(0,0,0,.35)'; cx.lineWidth = 1;

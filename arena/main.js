@@ -165,6 +165,10 @@ $('scn').innerHTML = Object.entries(SCENARIOS).map(([k, s]) => `<option value="$
 $('style').innerHTML = Object.entries(STYLES).map(([k, s]) => `<option value="${k}" title="${s.desc}">${s.n}</option>`).join('');
 $('scn').onchange = $('style').onchange = $('seed').onchange = start;
 $('resetBtn').onclick = start;
+// 보기 크기: 고른 값을 이 브라우저에 기억해 둔다
+try { const z = localStorage.getItem('arenaZoom'); if (z) $('zoom').value = z; } catch (e) {}
+View.opt.zoom = +$('zoom').value;
+$('zoom').onchange = () => { View.opt.zoom = +$('zoom').value; try { localStorage.setItem('arenaZoom', $('zoom').value); } catch (e) {} };
 $('diceBtn').onclick = () => { $('seed').value = Math.floor(Math.random() * 9000) + 1; start(); };
 $('pauseBtn').onclick = () => setPaused(!paused);
 $('stepBtn').onclick = () => { setPaused(true); for (let i = 0; i < 3; i++) step(G, STEP); renderPanels(true); };
