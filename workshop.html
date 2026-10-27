@@ -48,6 +48,7 @@
   .a small { display: block; color: var(--muted); font-size: 10.5px; margin-top: 1px; }
   .a.on { border-color: var(--accent); background: #4a4222; }
   .a .w { color: #8fd18b; }
+  .a .auto { color: #ffcf6b; }
   .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
   .row .lbl { width: 54px; color: var(--muted); }
   .t { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
@@ -115,7 +116,7 @@ const cv = $('cv'), cx = cv.getContext('2d');
 
 async function loadSet(id) {
   if (cache[id]) return cache[id];
-  const m = await (await fetch(`art/showcase/${id}/showcase.json`)).json(), im = {};
+  const m = await (await fetch(`art/showcase/${id}/showcase.json`, { cache: 'no-cache' })).json(), im = {};
   await Promise.all(Object.keys(m).map(a => new Promise(r => { const i = new Image(); i.onload = r; i.onerror = r; i.src = `art/showcase/${id}/${a}.png`; im[a] = i; })));
   return (cache[id] = { meta: m, imgs: im });
 }
@@ -170,8 +171,8 @@ function buildList() {
   const extra = Object.keys(meta).filter(k => !known.has(k)).map(k => [k, k.replace(/_/g, ' ')]);
   const groups = extra.length ? [...GROUPS, ['큰 칸 동작 (무기 전용)', extra]] : GROUPS;
   $('list').innerHTML = groups.map(([g, list]) => [g, list.filter(([k]) => meta[k])]).filter(([, l]) => l.length).map(([g, list]) => `<div class="grp"><h3>${g}</h3><div class="btns">${list.map(([k, n]) =>
-    `<button class="a" data-a="${k}">${n}<small>${meta[k].cols}칸${ONE_ROW[k] ? ' · 한 방향' : ''}${meta[k].weapon ? ' · <span class="w">무기</span>' : ''}</small></button>`).join('')}</div></div>`).join('') +
-    `<div class="note"><b>무기</b> 표시 = 무기 그림까지 있는 동작. LPC 무기는 무기마다 그려진 동작이 달라요 (예: 롱소드는 걷기·맞기·큰 무기 동작, 활은 활 쏘기). 무기 표시가 없는 동작은 맨손으로 보여요.</div>`;
+    `<button class="a" data-a="${k}">${n}<small>${meta[k].cols}칸${ONE_ROW[k] ? ' · 한 방향' : ''}${meta[k].weapon ? ' · <span class="w">무기</span>' : ''}${meta[k].auto ? ' · <span class="auto">자동</span>' : ''}</small></button>`).join('')}</div></div>`).join('') +
+    `<div class="note"><b>무기</b> 표시 = 무기 그림까지 있는 동작. LPC 무기는 무기마다 그려진 동작이 달라요 (예: 롱소드는 걷기·맞기·큰 무기 동작, 활은 활 쏘기). 무기 표시가 없는 동작은 맨손으로 보여요.<br><b style="color:#ffcf6b">자동</b> 표시 = 원래 그림엔 없어서 롱소드 동작을 본보기로 무기를 돌려 붙여 만든 것 (tools/weapon_moves.py).</div>`;
   for (const b of document.querySelectorAll('.a')) b.onclick = () => pick(b.dataset.a);
 }
 function pick(a) {
