@@ -21,6 +21,9 @@ with open(out, 'w', encoding='utf-8') as f:
         f.write(f"{c['file']}\n  작가: {', '.join(c.get('authors', []))}\n  라이선스: {', '.join(c.get('licenses', []))}\n  출처: {' '.join(c.get('urls', []))}\n\n")
     # 생성기에서 만들어 가져온 캐릭터 (tools/import_generator.py) 는 생성기가 준 출처를 그대로 붙인다
     import glob
+    fxc = os.path.join(os.path.dirname(out), 'fx', 'CREDITS.txt')
+    if os.path.exists(fxc):
+        f.write('\n===== ' + open(fxc, encoding='utf-8').read())
     for cf in sorted(glob.glob(os.path.join(os.path.dirname(out), 'showcase', '*', 'CREDITS.txt'))):
         f.write('\n===== 생성기로 만든 캐릭터: ' + os.path.basename(os.path.dirname(cf)) + ' =====\n')
         f.write(open(cf, encoding='utf-8').read())

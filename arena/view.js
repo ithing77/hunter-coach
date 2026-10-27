@@ -4,6 +4,8 @@ const View = (() => {
   let cv, cx, art = {}, ready = false, S = 1, ox = 0, oy = 0;
   const FPS = { walk: 10, idle: 2, combat_idle: 2, hurt: 8 };
   const opt = { lines: true, bubbles: true, zoom: 1 };   // zoom = 캐릭터 크기 (작게 하면 판 위의 말처럼 내려다보는 느낌)
+  // 이펙트 그림 (art/fx, 출처는 art/fx/CREDITS.txt). cell = 한 칸 크기, n = 칸 수
+  const FX = { guard: { src: 'art/fx/defense_up_blue.png', cell: 128, n: 18 } }, fxImg = {};
 
   async function init(canvas) {
     cv = canvas; cx = cv.getContext('2d');
@@ -15,6 +17,7 @@ const View = (() => {
       const need = ['walk', 'idle', 'combat_idle', 'hurt', 'thrust', ...us.map(u => u.attack), ...us.flatMap(u => (u.skills || []).map(s => SKILLS[s].anim).filter(Boolean))];
       await Promise.all([...new Set(need)].filter(a => meta[a]).map(a => new Promise(r => { const i = new Image(); i.onload = r; i.onerror = r; i.src = `art/showcase/${k}/${a}.png`; art[k].img[a] = i; })));
     }));
+    await Promise.all(Object.entries(FX).map(([k, f]) => new Promise(r => { const i = new Image(); i.onload = r; i.onerror = r; i.src = f.src; fxImg[k] = i; })));
     new ResizeObserver(resize).observe(cv); resize();
     ready = true;
   }
@@ -122,7 +125,7 @@ const View = (() => {
     cx.drawImage(A.img[anim], frame * Z, row * Z, Z, Z, p.x - (32 + pad) * sc, p.y - (57 + pad) * sc, Z * sc, Z * sc);
     cx.imageSmoothingEnabled = false;
     cx.globalAlpha = 1;
-    if (u.blockT > 0 && alive(u)) { cx.fillStyle = 'rgba(156,199,255,.35)'; cx.strokeStyle = '#9cc7ff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(p.x, p.y - 20 * sc, 22 * sc, 0, 7); cx.fill(); cx.stroke(); }
+    if (u.blockT > 0 && alive(u)) drawGuard(u, p, sc);
     if (u.state === 'dead') return;
     const w = Math.max(20, 26 * sc), top = p.y - 52 * sc, r = u.hp / u.max;
     if (u.d.role || u.hp < u.max) {
@@ -132,11 +135,19 @@ const View = (() => {
     if (u.d.mana) { cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(p.x - w / 2 - 1, top + 5, w + 2, 4); cx.fillStyle = '#5aa0ff'; cx.fillRect(p.x - w / 2, top + 6, w * u.mana / u.d.mana, 2); }
     if (u.state === 'cast') { const s = SKILLS[u.cast.k], k = u.cast.T / s.cast; cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(p.x - w / 2 - 1, p.y + 6 * sc, w + 2, 5); cx.fillStyle = '#ffe27a'; cx.fillRect(p.x - w / 2, p.y + 7 * sc, w * k, 3); }
   }
+  // 방패 막기: 머리 위에 방패가 나타나(0~8칸, 0.6초) 막는 동안 떠 있다가(12칸) 마지막 0.4초에 번쩍하며 사라짐(15~17칸)
+  function drawGuard(u, p, sc) {
+    const f = FX.guard, im = fxImg.guard, dur = SKILLS.block.dur, t = dur - u.blockT;
+    if (!im || !im.naturalWidth) return;
+    const k = t < 0.6 ? Math.floor(t / 0.6 * 9) : u.blockT < 0.4 ? 15 + Math.min(2, Math.floor((0.4 - u.blockT) / 0.4 * 3)) : 12;
+    const s = 0.42 * sc * f.cell, bob = t >= 0.6 && u.blockT >= 0.4 ? Math.sin(t * 4) * 1.5 * sc : 0;
+    cx.drawImage(im, k * f.cell, 0, f.cell, f.cell, p.x - s / 2, p.y - 66 * sc - s / 2 + bob, s, s);
+  }
   function drawBubble(u, isSel) {
     const p = P(u.x, u.y), sc = S * opt.zoom, text = u.say;
     const fade = isSel ? 1 : clamp(u.sayT / 0.4, 0.35, 1);
     cx.font = `700 ${Math.round(11 * Math.max(0.85, S))}px "Malgun Gothic", sans-serif`;
-    const tw = cx.measureText(text).width + 10, h = 17, x = p.x - tw / 2, y = p.y - 72 * sc - h;
+    const tw = cx.measureText(text).width + 10, h = 17, x = p.x - tw / 2, y = p.y - (u.blockT > 0 ? 96 : 72) * sc - h;   // 방패가 머리 위에 떠 있으면 그 위로
     cx.globalAlpha = fade;
     cx.fillStyle = isSel ? 'rgba(255,240,180,.97)' : 'rgba(255,255,255,.92)'; cx.strokeStyle = 'rgba(0,0,0,.35)'; cx.lineWidth = 1;
     cx.beginPath(); cx.roundRect(x, y, tw, h, 6); cx.fill(); cx.stroke();

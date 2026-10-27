@@ -221,7 +221,6 @@ function applySkill(G, u, k, t) {
     G.fx.push({ kind: 'num', x: u.x, y: u.y - 1.6, text: `도발! ×${es.length}`, color: '#f0b429', t: 0, life: 1.1 });
   } else if (k === 'block') {
     u.blockT = s.dur;
-    G.fx.push({ kind: 'num', x: u.x, y: u.y - 1.6, text: '방패!', color: '#9cc7ff', t: 0, life: 1 });
   } else if (s.radius && s.dmg) {   // 범위 피해: 사거리가 있으면 표적 자리(화염구), 없으면 내 둘레(회전 베기)
     const c = s.range && t ? { x: t.x, y: t.y } : u;
     for (const e of liveFoes(G)) if (dist(e, c) <= s.radius) dealDamage(G, u, e, s.dmg);

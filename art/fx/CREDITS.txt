@@ -1,0 +1,5 @@
+이펙트 그림 (art/fx/)
+defense_up_blue.png — Super Pixel Fantasy FX Pack 3 (Free Version) "fanfx3_defense_up_large_blue"
+  Pixel Art Assets - Will Tice / unTied Games
+  https://untiedgames.itch.io/super-pixel-fantasy-fx-pack-3
+  라이선스: http://untiedgames.com/files/license.txt (게임에 넣어 배포 OK · 출처 표시 · 그림만 따로 재배포·AI 학습 금지)
