@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>파티 AI 전투장</title>
+<style>
+  :root { --bg: #1d1f1a; --panel: #2a2c25; --panel2: #23251f; --line: #3c3f35; --ink: #f1efe8; --muted: #a9a79c; --accent: #f0b429; --good: #8dd18b; --bad: #ff8a78; --blue: #9cc7ff; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; overflow: hidden; }
+  button, select, input { font-family: inherit; }
+  button { cursor: pointer; }
+  #app { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr) 440px; gap: 8px; padding: 8px; box-sizing: border-box; }
+  #top { grid-column: 1 / 3; display: flex; gap: 8px; align-items: center; background: var(--panel); border-radius: 10px; padding: 7px 12px; flex-wrap: wrap; font-size: 13px; }
+  #top b { font-size: 15px; margin-right: 4px; }
+  #top .sp { flex: 1; }
+  #top button, #top select, #top input { background: #3a3d33; color: var(--ink); border: 1px solid #4a4d42; border-radius: 6px; padding: 4px 9px; font-size: 13px; }
+  #top input[type=number] { width: 64px; }
+  #top button.on { background: var(--accent); color: #222; border-color: var(--accent); font-weight: 900; }
+  #top label { color: var(--muted); display: flex; gap: 4px; align-items: center; }
+  #clock { font-variant-numeric: tabular-nums; min-width: 92px; font-weight: 700; }
+  #phase { font-weight: 900; padding: 3px 9px; border-radius: 6px; background: #3a3d33; }
+  #left { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px; min-height: 0; }
+  #field { width: 100%; height: 100%; display: block; border-radius: 10px; background: #14160f; cursor: pointer; }
+  #heroes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .hero { background: var(--panel); border-radius: 10px; padding: 5px 8px; display: flex; gap: 8px; align-items: center; cursor: pointer; border: 2px solid transparent; }
+  .hero.sel { border-color: #ffe27a; }
+  .hero.down { opacity: .45; }
+  .hero canvas { width: 40px; height: 40px; background: #3a3d33; border-radius: 8px; image-rendering: pixelated; flex: none; }
+  .hero > div { flex: 1; min-width: 0; }
+  .hn { font-weight: 700; font-size: 13px; }
+  .hs { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar { height: 6px; background: #111; border-radius: 4px; overflow: hidden; margin-top: 3px; }
+  .bar i { display: block; height: 100%; }
+  /* 생각 보기 */
+  #qa { display: grid; grid-template-rows: minmax(0, 1.25fr) auto minmax(0, 1fr); gap: 8px; min-height: 0; }
+  .box { background: var(--panel); border-radius: 10px; padding: 8px 10px; min-height: 0; overflow: auto; font-size: 12.5px; line-height: 1.45; }
+  .box h3 { margin: 0 0 6px; font-size: 13px; color: var(--accent); display: flex; gap: 8px; align-items: center; }
+  .box h3 .r { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 11.5px; display: flex; gap: 6px; align-items: center; }
+  .who { font-size: 14px; font-weight: 900; }
+  .sub { color: var(--muted); font-size: 11.5px; }
+  .tier { border-left: 3px solid var(--line); padding: 3px 0 3px 8px; margin: 5px 0; }
+  .tier.picked { border-color: var(--accent); background: rgba(240,180,41,.07); }
+  .tier.skip { opacity: .4; }
+  .tname { font-weight: 700; }
+  .cand { display: grid; grid-template-columns: 1fr 46px 54px; gap: 6px; align-items: center; margin-top: 2px; }
+  .cand .l { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cand .l.win { font-weight: 900; color: #ffe27a; }
+  .cand .s { text-align: right; font-variant-numeric: tabular-nums; }
+  .cand .b { height: 6px; background: #111; border-radius: 3px; overflow: hidden; position: relative; }
+  .cand .b i { display: block; height: 100%; background: var(--blue); }
+  .cand .b .min { position: absolute; top: -2px; bottom: -2px; width: 1px; background: #fff8; }
+  .why { color: var(--muted); font-size: 11.5px; margin: 0 0 2px 4px; }
+  .pick { margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: #3a3420; }
+  .kv { display: grid; grid-template-columns: 92px 1fr; gap: 2px 8px; }
+  .kv div:nth-child(odd) { color: var(--muted); }
+  .thr { display: grid; grid-template-columns: 70px 1fr 60px; gap: 6px; align-items: center; margin-top: 3px; }
+  .thr .b { height: 8px; background: #111; border-radius: 4px; overflow: hidden; } .thr .b i { display: block; height: 100%; background: var(--bad); }
+  #log div.row { padding: 3px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  #log div.row:hover { background: #33362d; }
+  #log .t { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 4px; }
+  #log .ph { color: var(--accent); font-weight: 700; } #log .bad { color: var(--bad); font-weight: 700; }
+  #log .w { color: var(--muted); font-size: 11px; }
+  /* 30판 시험 */
+  .screen { position: fixed; inset: 0; background: rgba(10,11,9,.82); display: grid; place-items: center; z-index: 40; }
+  .modal { background: var(--panel); border-radius: 14px; padding: 18px 22px; max-width: 980px; width: calc(100vw - 40px); max-height: calc(100vh - 60px); overflow: auto; }
+  .modal h2 { margin: 0 0 4px; }
+  .modal table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  .modal th, .modal td { border-bottom: 1px solid var(--line); padding: 5px 7px; text-align: right; white-space: nowrap; }
+  .modal th { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .modal td:first-child, .modal th:first-child, .modal td:nth-child(2), .modal th:nth-child(2) { text-align: left; }
+  .modal .row-btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .modal button { background: var(--accent); color: #222; border: 0; border-radius: 8px; padding: 8px 16px; font-weight: 900; }
+  .modal button.ghost { background: #3a3d33; color: var(--ink); font-weight: 400; }
+  .lo { color: var(--bad); } .hi { color: var(--good); }
+  #endBanner { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); background: rgba(24,25,20,.95); border: 2px solid var(--accent); border-radius: 12px; padding: 8px 16px; font-weight: 900; font-size: 15px; display: none; text-align: center; }
+  #endBanner .sub { font-weight: 400; margin-top: 2px; }
+  @media (max-width: 1000px) {
+    html, body { overflow: auto; }
+    #app { height: auto; grid-template-columns: 1fr; grid-template-rows: auto; }
+    #top { grid-column: 1; }
+    #left { grid-template-rows: 60vh auto; }
+    #heroes { grid-template-columns: repeat(2, 1fr); }
+    #qa { grid-template-rows: auto; }
+    .box { max-height: 60vh; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <b>⚔ 파티 AI 전투장</b>
+    <select id="scn" title="상황"></select>
+    <select id="style" title="성향 (감독 손잡이)"></select>
+    <label>판 번호 <input type="number" id="seed" value="1000"></label>
+    <button id="diceBtn" title="다른 판">🎲</button>
+    <button id="resetBtn" title="R">↺ 다시</button>
+    <span class="sp"></span>
+    <span id="phase"></span>
+    <span id="clock"></span>
+    <button id="pauseBtn" title="스페이스">⏸</button>
+    <button id="stepBtn" title=". (마침표) — 0.1초 앞으로">⏭ 0.1초</button>
+    <button data-speed="0.25">¼</button><button data-speed="0.5">½</button><button data-speed="1" class="on">1배</button><button data-speed="2">2배</button><button data-speed="4">4배</button>
+    <button id="batchBtn">📊 30판 시험</button>
+    <a href="art/CREDITS.txt" target="_blank" style="color:#a9a79c;font-size:12px">그림(LPC)</a>
+  </div>
+  <div id="left">
+    <div style="position:relative;min-height:0">
+      <canvas id="field"></canvas>
+      <div id="endBanner"></div>
+    </div>
+    <div id="heroes"></div>
+  </div>
+  <div id="qa">
+    <div class="box" id="thinkBox"></div>
+    <div class="box" id="boardBox"></div>
+    <div class="box" id="logWrap">
+      <h3>📜 생각 기록 <span class="r"><label><input type="checkbox" id="logSel"> 선택한 것만</label><label><input type="checkbox" id="autoStop"> 결정 바뀌면 멈춤</label></span></h3>
+      <div id="log"></div>
+    </div>
+  </div>
+</div>
+<div class="screen" id="batch" style="display:none"><div class="modal" id="batchBox"></div></div>
+<script src="arena/data.js"></script>
+<script src="arena/sim.js"></script>
+<script src="arena/ai.js"></script>
+<script src="arena/view.js"></script>
+<script src="arena/main.js"></script>
+</body>
+</html>
