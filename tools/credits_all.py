@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 sys.argv = [sys.argv[0], sys.argv[1]]
 import build_hunters as B
 import armor_sets as S
-looks = list(B.HUNTERS.values()) + list(S.SETS.values()) + list(S.ENEMIES.values()) + list(S.PARTY.values())
+looks = list(B.HUNTERS.values()) + list(S.SETS.values()) + list(S.ENEMIES.values()) + list(S.PARTY.values()) + list(S.WEAPONS.values())
 credits = {}
 for h in looks:
     for part in h['parts']:

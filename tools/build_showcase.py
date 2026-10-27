@@ -16,7 +16,7 @@ BIG = {'slash_oversize': ('slash', False, 192), 'slash_reverse_oversize': ('slas
 
 def main():
     import armor_sets
-    h = B.HUNTERS.get(HID) or armor_sets.SETS.get(HID) or armor_sets.ENEMIES.get(HID) or armor_sets.PARTY[HID]
+    h = B.HUNTERS.get(HID) or armor_sets.SETS.get(HID) or armor_sets.ENEMIES.get(HID) or armor_sets.PARTY.get(HID) or armor_sets.WEAPONS[HID]
     layers = []
     for part in h['parts']:
         rel, var, tint = (part + (None,))[:3]

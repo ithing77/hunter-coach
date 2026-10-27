@@ -75,3 +75,36 @@ PARTY = {
     'skel_archer': {'name': '해골 궁수', 'sex': 'male', 'parts': [('body/special/body_skeleton.json', None), ('head/heads/undead/heads_skeleton.json', None),
         ('weapons/ranged/bow/weapon_ranged_bow_normal.json', 'light'), ('weapons/ranged/bow/weapon_ranged_bow_arrow.json', 'arrow')]},
 }
+
+
+# 무기 보기 (작업실 [동작] 탭): 같은 사람에게 무기만 바꿔 쥔다. id → (이름, 갈래, 무기 부위들)
+#   python -I tools/build_weapons.py <LPC 저장소> 가 art/showcase/w_<id>/ 와 art/showcase/weapons.json 을 만든다
+W_BODY = BASE + UNDER(BROWN) + [('hair/short/hair_plain.json', None)]
+WEAPON_LIST = [
+    ('none', '맨손', '맨손', []),
+    ('longsword', '롱소드', '칼', [('weapons/sword/weapon_sword_longsword.json', 'longsword')]),
+    ('arming', '아밍 소드', '칼', [('weapons/sword/weapon_sword_arming.json', 'steel')]),
+    ('dagger', '단검', '칼', [('weapons/sword/weapon_sword_dagger.json', 'dagger')]),
+    ('katana', '카타나', '칼', [('weapons/sword/weapon_sword_katana.json', 'katana')]),
+    ('rapier', '레이피어', '칼', [('weapons/sword/weapon_sword_rapier.json', 'rapier')]),
+    ('saber', '세이버', '칼', [('weapons/sword/weapon_sword_saber.json', 'saber')]),
+    ('scimitar', '시미터', '칼', [('weapons/sword/weapon_sword_scimitar.json', 'scimitar')]),
+    ('glowsword', '빛나는 검', '칼', [('weapons/sword/weapon_sword_glowsword.json', 'blue')]),
+    ('waraxe', '전쟁 도끼', '둔기', [('weapons/blunt/weapon_blunt_waraxe.json', 'waraxe')]),
+    ('mace', '메이스', '둔기', [('weapons/blunt/weapon_blunt_mace.json', 'mace')]),
+    ('flail', '플레일', '둔기', [('weapons/blunt/weapon_blunt_flail.json', 'flail')]),
+    ('club', '곤봉', '둔기', [('weapons/blunt/weapon_blunt_club.json', 'club')]),
+    ('spear', '창', '장병기', [('weapons/polearm/weapon_polearm_spear.json', 'medium')]),
+    ('halberd', '할버드', '장병기', [('weapons/polearm/weapon_polearm_halberd.json', 'halberd')]),
+    ('longspear', '긴 창', '장병기', [('weapons/polearm/weapon_polearm_longspear.json', 'medium')]),
+    ('trident', '삼지창', '장병기', [('weapons/polearm/weapon_polearm_trident.json', 'medium')]),
+    ('scythe', '낫', '장병기', [('weapons/polearm/weapon_polearm_scythe.json', 'scythe')]),
+    ('bow', '활', '원거리', [('weapons/ranged/bow/weapon_ranged_bow_normal.json', 'light'), ('weapons/ranged/bow/weapon_ranged_bow_arrow.json', 'arrow')]),
+    ('greatbow', '큰 활', '원거리', [('weapons/ranged/bow/weapon_ranged_bow_great.json', 'medium'), ('weapons/ranged/bow/weapon_ranged_bow_arrow.json', 'arrow')]),
+    ('crossbow', '석궁', '원거리', [('weapons/ranged/weapon_ranged_crossbow.json', 'crossbow')]),
+    ('slingshot', '새총', '원거리', [('weapons/ranged/weapon_ranged_slingshot.json', 'slingshot')]),
+    ('staff', '지팡이', '마법', [('weapons/magic/weapon_magic_simple.json', 'simple')]),
+    ('crystal', '수정 지팡이', '마법', [('weapons/magic/weapon_magic_crystal.json', 'blue')]),
+    ('wand', '완드', '마법', [('weapons/magic/weapon_magic_wand.json', 'wand')]),
+]
+WEAPONS = {'w_' + k: {'name': n, 'sex': 'male', 'parts': W_BODY + w} for k, n, g, w in WEAPON_LIST}

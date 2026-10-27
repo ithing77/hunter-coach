@@ -23,6 +23,11 @@
   .set { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 10px; padding: 4px 10px 6px 4px; display: flex; gap: 6px; align-items: center; font-size: 13.5px; font-weight: 700; }
   .set canvas { width: 40px; height: 40px; }
   .set.on { border-color: var(--accent); background: #4a4222; }
+  #modeBar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px 14px; }
+  .mode { background: #33352d; color: var(--ink); border: 1.5px solid #4a4d42; border-radius: 10px; padding: 8px 16px; font-size: 15px; font-weight: 900; }
+  .mode.on { border-color: var(--accent); background: #4a4222; }
+  #modeNote { color: var(--muted); font-size: 12.5px; margin-left: 6px; }
+  .kindLbl { align-self: center; color: var(--muted); font-size: 12px; font-weight: 700; margin-left: 6px; }
   #setDesc { width: 100%; font-size: 12.5px; color: var(--muted); }
   #genBtn { margin-left: auto; background: var(--accent); color: #222; border: 0; border-radius: 8px; padding: 6px 14px; font-weight: 900; font-size: 14px; cursor: pointer; }
   #resBtn { background: #3a3d33; color: var(--ink, #eee); border: 1.5px solid var(--accent); border-radius: 8px; padding: 6px 14px; font-weight: 900; font-size: 14px; text-decoration: none; margin-left: 6px; }
@@ -55,6 +60,7 @@
 <body>
 <div id="app">
   <h1>🎬 동작 작업실 <small>LPC 생성기로 조립한 갑옷 세트와 모든 동작</small><button id="genBtn">🧩 캐릭터 만들기</button><a id="sheetBtn" href="https://docs.google.com/spreadsheets/d/15sPuuAGJbLvGQA6hZ4GwZ3AP6FiIYGSPtr0_9lx9ZLg/edit" target="_blank">📊 스킬 시트</a><a id="arenaBtn" href="arena.html?scn=custom" target="_blank">⚔ 테스트 아레나</a><a id="skillBtn" href="skills.html">✨ 직업·스킬</a><a id="resBtn" href="resources.html">🗂 리소스</a></h1>
+  <div class="panel" id="modeBar" style="grid-column:1 / 3"><button class="mode on" data-m="weapon">🎬 동작 · 무기별</button><button class="mode" data-m="outfit">👕 복장</button><span id="modeNote"></span></div>
   <div class="panel" id="setBar" style="grid-column:1 / 3"></div>
   <div>
     <div class="panel">
@@ -96,10 +102,13 @@ const GROUPS = [
   ['기본', [['idle', '대기'], ['walk', '걷기'], ['run', '달리기'], ['combat_idle', '전투 대기'], ['jump', '점프'], ['sit', '앉기'], ['emote', '감정 표현'], ['climb', '오르기']]],
   ['맞기', [['hurt', '맞고 쓰러지기']]],
   ['공격 (몸 동작)', [['slash', '베기'], ['backslash', '뒤로 베기'], ['halfslash', '반 베기'], ['thrust', '찌르기'], ['spellcast', '마법 쓰기'], ['shoot', '활 쏘기']]],
-  ['대검 전용 (큰 칸)', [['slash_oversize', '대검 베기'], ['slash_reverse_oversize', '대검 올려 베기'], ['thrust_oversize', '대검 찌르기']]],
+  ['큰 무기 (192칸)', [['slash_oversize', '크게 베기'], ['slash_reverse_oversize', '크게 올려 베기'], ['thrust_oversize', '길게 찌르기']]],
+  ['한손 무기 (128칸)', [['slash_128', '베기'], ['backslash_128', '뒤로 베기'], ['halfslash_128', '반 베기']]],
 ];
 const ONE_ROW = { hurt: true, climb: true };   // 한 방향만 있는 동작
-let HID = new URLSearchParams(location.search).get('h') || 'gs', SETS = [], cache = {}, compare = false;
+const Q = new URLSearchParams(location.search);
+let HID = Q.get('h') || 'w_longsword', SETS = [], WEAPONS = [], cache = {}, compare = false, mode = Q.get('m') || (Q.get('h') && !Q.get('h').startsWith('w_') ? 'outfit' : 'weapon');
+const LIST = () => (mode === 'weapon' ? WEAPONS : SETS);   // 지금 탭의 목록: 무기별(같은 사람, 무기만 바뀜) / 복장 세트
 const $ = id => document.getElementById(id);
 let meta, imgs = {}, cur = 'idle', dir = 2, all4 = false, fps = 10, zoom = 3, loop = true, playing = true, frame = 0, acc = 0, last = 0;
 const cv = $('cv'), cx = cv.getContext('2d');
@@ -113,22 +122,47 @@ async function loadSet(id) {
 async function useSet(id) {
   HID = id; const c = await loadSet(id); meta = c.meta; imgs = c.imgs;
   for (const b of document.querySelectorAll('.set[data-s]')) b.classList.toggle('on', b.dataset.s === id && !compare);
-  const s = SETS.find(x => x.id === id);
-  $('setDesc').textContent = compare ? '모든 세트를 같은 동작·방향으로 나란히 보여 줘요. 세트를 누르면 하나만 보여요.' : `${s.name} — ${s.desc}`;
+  const s = LIST().find(x => x.id === id) || {};
+  const shown = Object.keys(meta).filter(k => meta[k].weapon);
+  $('setDesc').textContent = compare ? `모든 ${mode === 'weapon' ? '무기' : '세트'}를 같은 동작·방향으로 나란히 보여 줘요. 하나를 누르면 그것만 보여요.`
+    : mode === 'weapon' ? `${s.name} (${s.kind}) — 무기가 보이는 동작: ${shown.length ? shown.join(', ') : '없음 (맨손)'}` : `${s.name} — ${s.desc}`;
 }
 async function init() {
-  SETS = await (await fetch('art/showcase/sets.json')).json();
-  await Promise.all(SETS.map(s => loadSet(s.id)));
-  $('setBar').innerHTML = SETS.map(s => `<button class="set" data-s="${s.id}"><canvas width="64" height="64"></canvas>${s.name}</button>`).join('') + '<button class="set" id="cmpBtn">⇆ 세트 모두 비교</button><div id="setDesc"></div>';
+  [SETS, WEAPONS] = await Promise.all([(await fetch('art/showcase/sets.json')).json(), (await fetch('art/showcase/weapons.json')).json()]);
+  for (const b of document.querySelectorAll('.mode')) b.onclick = () => useMode(b.dataset.m);
+  await useMode(mode, HID);
+  requestAnimationFrame(loopFn);
+}
+// 탭 바꾸기: 위쪽 줄을 무기 목록 / 복장 세트 목록으로 다시 그린다
+async function useMode(m, want) {
+  mode = m; compare = false;
+  for (const b of document.querySelectorAll('.mode')) b.classList.toggle('on', b.dataset.m === m);
+  $('modeNote').textContent = m === 'weapon' ? '같은 사람에게 무기만 바꿔 쥐여 동작을 봐요 (LPC 무기)' : '갑옷·옷 세트 (무기는 롱소드)';
+  const list = LIST();
+  await Promise.all(list.map(s => loadSet(s.id)));
+  let last = '';
+  $('setBar').innerHTML = list.map(s => { const lbl = m === 'weapon' && s.kind !== last ? `<span class="kindLbl">${(last = s.kind)}</span>` : '';
+    return `${lbl}<button class="set" data-s="${s.id}"><canvas width="64" height="64"></canvas>${s.name}</button>`; }).join('') +
+    `<button class="set" id="cmpBtn">⇆ ${m === 'weapon' ? '무기' : '세트'} 모두 비교</button><div id="setDesc"></div>`;
   for (const b of document.querySelectorAll('.set[data-s]')) {
-    const c = b.querySelector('canvas').getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(cache[b.dataset.s].imgs.idle, 0, 128, 64, 64, 0, 0, 64, 64);
-    b.onclick = async () => { compare = false; $('cmpBtn').classList.remove('on'); await useSet(b.dataset.s); buildList(); pick(cur); };
+    const c = b.querySelector('canvas').getContext('2d'), im = cache[b.dataset.s].imgs;
+    c.imageSmoothingEnabled = false;
+    // 무기 탭 그림은 무기가 보이는 걷기 첫 칸, 없으면 대기
+    const src = m === 'weapon' && cache[b.dataset.s].meta.walk && cache[b.dataset.s].meta.walk.weapon ? im.walk : im.idle;
+    c.drawImage(src, 0, 128, 64, 64, 0, 0, 64, 64);
+    b.onclick = async () => { compare = false; $('cmpBtn').classList.remove('on'); await useSet(b.dataset.s); buildList(); pick(bestAnim()); };
   }
   $('cmpBtn').onclick = async () => { compare = !compare; $('cmpBtn').classList.toggle('on', compare); await useSet(HID); pick(cur); };
-  await useSet(SETS.some(s => s.id === HID) ? HID : 'gs');
+  const id = list.some(s => s.id === want) ? want : list.some(s => s.id === HID) ? HID : list[m === 'weapon' ? 1 : 0].id;
+  await useSet(id);
   buildList();
-  pick('idle');
-  requestAnimationFrame(loopFn);
+  pick(bestAnim());
+}
+// 무기를 바꾸면 지금 동작에 무기가 안 보일 때 그 무기가 보이는 공격 동작으로 옮긴다
+function bestAnim() {
+  if (mode !== 'weapon' || (meta[cur] && meta[cur].weapon)) return meta[cur] ? cur : 'idle';
+  const order = ['slash_oversize', 'slash_128', 'thrust_oversize', 'slash_reverse_oversize', 'shoot', 'spellcast', 'slash', 'thrust', 'halfslash_128', 'walk'];
+  return order.find(k => meta[k] && meta[k].weapon) || Object.keys(meta).find(k => meta[k].weapon) || 'idle';
 }
 // 동작 목록은 세트마다 다를 수 있다 (생성기로 만든 캐릭터는 무기에 따라 큰 칸 동작이 달라짐)
 function buildList() {
@@ -136,8 +170,8 @@ function buildList() {
   const extra = Object.keys(meta).filter(k => !known.has(k)).map(k => [k, k.replace(/_/g, ' ')]);
   const groups = extra.length ? [...GROUPS, ['큰 칸 동작 (무기 전용)', extra]] : GROUPS;
   $('list').innerHTML = groups.map(([g, list]) => [g, list.filter(([k]) => meta[k])]).filter(([, l]) => l.length).map(([g, list]) => `<div class="grp"><h3>${g}</h3><div class="btns">${list.map(([k, n]) =>
-    `<button class="a" data-a="${k}">${n}<small>${meta[k].cols}칸${ONE_ROW[k] ? ' · 한 방향' : ''}${meta[k].weapon ? ' · <span class="w">칼</span>' : ''}</small></button>`).join('')}</div></div>`).join('') +
-    `<div class="note"><b>칼</b> 표시 = 무기 그림까지 있는 동작. LPC 롱소드는 걷기·맞기·대검 전용 동작에만 칼 그림이 있어요. 다른 동작은 무기를 바꾸면 생길 수 있어요.<br>사냥 데모에서 쓰는 것: 대기·걷기·달리기·전투 대기·점프(회피)·맞고 쓰러지기·대검 베기</div>`;
+    `<button class="a" data-a="${k}">${n}<small>${meta[k].cols}칸${ONE_ROW[k] ? ' · 한 방향' : ''}${meta[k].weapon ? ' · <span class="w">무기</span>' : ''}</small></button>`).join('')}</div></div>`).join('') +
+    `<div class="note"><b>무기</b> 표시 = 무기 그림까지 있는 동작. LPC 무기는 무기마다 그려진 동작이 달라요 (예: 롱소드는 걷기·맞기·큰 무기 동작, 활은 활 쏘기). 무기 표시가 없는 동작은 맨손으로 보여요.</div>`;
   for (const b of document.querySelectorAll('.a')) b.onclick = () => pick(b.dataset.a);
 }
 function pick(a) {
@@ -146,13 +180,13 @@ function pick(a) {
   for (const b of document.querySelectorAll('.a')) b.classList.toggle('on', b.dataset.a === a);
   const m = meta[a];
   $('name').innerHTML = `<b>${document.querySelector(`.a[data-a="${a}"]`).firstChild.textContent}</b> · ${a} · ${m.cols}칸 · 한 칸 ${m.size}×${m.size}`;
-  $('warn').textContent = (ONE_ROW[a] ? '이 동작은 한 방향(앞모습)만 있어요. ' : '') + (!m.weapon ? '이 동작에는 칼 그림이 없어요 (맨손으로 보여요).' : '');
+  $('warn').textContent = (ONE_ROW[a] ? '이 동작은 한 방향(앞모습)만 있어요. ' : '') + (!m.weapon ? '이 동작에는 무기 그림이 없어요 (맨손으로 보여요).' : '');
   resize();
 }
 const boxOf = m => (m.size > 64 ? Math.round(m.size * 0.84) : 96);   // 보여 줄 칸: 큰 칸은 가장자리 빈 곳을 조금 잘라 내고, 보통 칸은 둘레에 여유
 function resize() {
   const m = meta[cur], s = boxOf(m) * zoom;
-  const n = compare ? SETS.length : (all4 && !ONE_ROW[cur] ? 4 : 1);
+  const n = compare ? LIST().length : (all4 && !ONE_ROW[cur] ? 4 : 1);
   cv.width = s * n; cv.height = s;
   cv.style.width = Math.min(cv.width, ($('stage').clientWidth - 20)) + 'px';
 }
@@ -161,7 +195,7 @@ function draw() {
   cx.imageSmoothingEnabled = false;
   cx.clearRect(0, 0, cv.width, cv.height);
   const one = ONE_ROW[cur] ? 0 : dir;
-  const cells = compare ? SETS.map(s => ({ r: one, img: cache[s.id].imgs[cur] })) : (all4 && !ONE_ROW[cur] ? [0, 1, 2, 3] : [one]).map(r => ({ r, img }));
+  const cells = compare ? LIST().map(s => ({ r: one, img: cache[s.id].imgs[cur] })) : (all4 && !ONE_ROW[cur] ? [0, 1, 2, 3] : [one]).map(r => ({ r, img }));
   cells.forEach(({ r, img }, i) => {
     const ox = i * box * zoom, off = (box - S) / 2 * zoom;
     cx.fillStyle = 'rgba(0,0,0,.2)';

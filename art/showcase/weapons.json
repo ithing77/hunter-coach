@@ -1,0 +1,127 @@
+[
+ {
+  "id": "w_none",
+  "name": "맨손",
+  "kind": "맨손"
+ },
+ {
+  "id": "w_longsword",
+  "name": "롱소드",
+  "kind": "칼"
+ },
+ {
+  "id": "w_arming",
+  "name": "아밍 소드",
+  "kind": "칼"
+ },
+ {
+  "id": "w_dagger",
+  "name": "단검",
+  "kind": "칼"
+ },
+ {
+  "id": "w_katana",
+  "name": "카타나",
+  "kind": "칼"
+ },
+ {
+  "id": "w_rapier",
+  "name": "레이피어",
+  "kind": "칼"
+ },
+ {
+  "id": "w_saber",
+  "name": "세이버",
+  "kind": "칼"
+ },
+ {
+  "id": "w_scimitar",
+  "name": "시미터",
+  "kind": "칼"
+ },
+ {
+  "id": "w_glowsword",
+  "name": "빛나는 검",
+  "kind": "칼"
+ },
+ {
+  "id": "w_waraxe",
+  "name": "전쟁 도끼",
+  "kind": "둔기"
+ },
+ {
+  "id": "w_mace",
+  "name": "메이스",
+  "kind": "둔기"
+ },
+ {
+  "id": "w_flail",
+  "name": "플레일",
+  "kind": "둔기"
+ },
+ {
+  "id": "w_club",
+  "name": "곤봉",
+  "kind": "둔기"
+ },
+ {
+  "id": "w_spear",
+  "name": "창",
+  "kind": "장병기"
+ },
+ {
+  "id": "w_halberd",
+  "name": "할버드",
+  "kind": "장병기"
+ },
+ {
+  "id": "w_longspear",
+  "name": "긴 창",
+  "kind": "장병기"
+ },
+ {
+  "id": "w_trident",
+  "name": "삼지창",
+  "kind": "장병기"
+ },
+ {
+  "id": "w_scythe",
+  "name": "낫",
+  "kind": "장병기"
+ },
+ {
+  "id": "w_bow",
+  "name": "활",
+  "kind": "원거리"
+ },
+ {
+  "id": "w_greatbow",
+  "name": "큰 활",
+  "kind": "원거리"
+ },
+ {
+  "id": "w_crossbow",
+  "name": "석궁",
+  "kind": "원거리"
+ },
+ {
+  "id": "w_slingshot",
+  "name": "새총",
+  "kind": "원거리"
+ },
+ {
+  "id": "w_staff",
+  "name": "지팡이",
+  "kind": "마법"
+ },
+ {
+  "id": "w_crystal",
+  "name": "수정 지팡이",
+  "kind": "마법"
+ },
+ {
+  "id": "w_wand",
+  "name": "완드",
+  "kind": "마법"
+ }
+]

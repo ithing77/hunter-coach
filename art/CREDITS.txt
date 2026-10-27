@@ -347,20 +347,65 @@ torso/clothes/longsleeve/longsleeve/teen
   라이선스: OGA-BY 3.0, GPL 3.0
   출처: https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles https://opengameart.org/content/lpc-teen-unisex-base-clothes http://opengameart.org/content/lpc-clothing-updates https://opengameart.org/content/lpc-revised-character-basics https://github.com/ElizaWy/LPC/tree/main/Characters/Clothing https://opengameart.org/content/lpc-expanded-sit-run-jump-more https://opengameart.org/content/lpc-expanded-simple-shirts
 
+weapon/blunt/club
+  작가: bluecarrot16
+  라이선스: OGA-BY 3.0+, GPL 3.0, CC-BY 4.0
+  출처: https://opengameart.org/content/lpc-more-weapons
+
+weapon/blunt/flail
+  작가: Benjamin K. Smith (BenCreating), bluecarrot16, Sander Frenken (castelonia)
+  라이선스: CC-BY-SA 3.0, GPL 3.0
+  출처: https://opengameart.org/content/lpc-medieval-weapons
+
+weapon/blunt/mace
+  작가: Johannes Sjölund (wulax), bluecarrot16
+  라이선스: OGA-BY 3.0, CC-BY-SA 3.0
+  출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-extended-weapon-animations
+
 weapon/blunt/waraxe
   작가: Benjamin K. Smith (BenCreating), bluecarrot16, Sander Frenken (castelonia)
   라이선스: CC-BY-SA 3.0, GPL 3.0
   출처: https://opengameart.org/content/lpc-medieval-weapons
+
+weapon/magic/crystal
+  작가: bluecarrot16
+  라이선스: OGA-BY 3.0+, GPL 3.0, CC-BY 4.0
+  출처: https://opengameart.org/content/lpc-more-weapons
 
 weapon/magic/simple
   작가: bluecarrot16, Dr. Jamgo
   라이선스: CC0
   출처: https://opengameart.org/content/lpc-simple-staff
 
+weapon/magic/wand
+  작가: Matthew Krohn (makrohn)
+  라이선스: CC-BY-SA 3.0, GPL 3.0, OGA-BY 3.0
+  출처: https://opengameart.org/content/lpc-wands
+
+weapon/polearm/halberd
+  작가: Benjamin K. Smith (BenCreating), bluecarrot16, Sander Frenken (castelonia)
+  라이선스: CC-BY-SA 3.0, GPL 3.0
+  출처: https://opengameart.org/content/lpc-medieval-weapons
+
+weapon/polearm/longspear
+  작가: Pierre Vigier (pvigier), Johannes Sjölund (wulax), Inboxninja
+  라이선스: CC-BY-SA 3.0
+  출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
+
+weapon/polearm/scythe
+  작가: bluecarrot16
+  라이선스: CC-BY-SA 3.0
+  출처: https://opengameart.org/content/lpc-extended-weapon-animations
+
 weapon/polearm/spear
   작가: Pierre Vigier (pvigier), Johannes Sjölund (wulax), Inboxninja
   라이선스: CC-BY-SA 3.0
   출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-spear-and-shovel-reworked
+
+weapon/polearm/trident
+  작가: Daniel Eddeland (daneeklu), gr3yh47, Johannes Sjölund (wulax)
+  라이선스: CC-BY-SA 3.0
+  출처: https://opengameart.org/content/lpc-weapons-two-bows-a-spear-and-a-trident https://opengameart.org/content/lpc-extended-weapon-animations
 
 weapon/ranged/bow/arrow
   작가: Johannes Sjölund (wulax)
@@ -377,6 +422,16 @@ weapon/ranged/bow/normal
   라이선스: OGA-BY 3.0+, GPL 3.0, CC-BY 4.0
   출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-walk-animations-for-bows
 
+weapon/ranged/crossbow
+  작가: bluecarrot16, drjamgo@hotmail.com
+  라이선스: CC0
+  출처: https://opengameart.org/content/lpc-crossbow-final
+
+weapon/ranged/slingshot
+  작가: bluecarrot16
+  라이선스: OGA-BY 3.0+, GPL 3.0, CC-BY 4.0
+  출처: https://opengameart.org/content/lpc-more-weapons
+
 weapon/sword/arming
   작가: ElizaWy; walk and down by JaidynReiman
   라이선스: OGA-BY 3.0
@@ -387,10 +442,35 @@ weapon/sword/dagger
   라이선스: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
   출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-extended-weapon-animations
 
+weapon/sword/glowsword
+  작가: bluecarrot16, tskaufma, Johannes Sjölund (wulax)
+  라이선스: OGA-BY 3.0, CC-BY-SA 3.0
+  출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-glow-sword https://opengameart.org/content/lpc-extended-weapon-animations
+
+weapon/sword/katana
+  작가: Pierre Vigier and DCSS artists (see https://github.com/crawl/tiles/blob/master/ARTISTS.md)
+  라이선스: OGA-BY 3.0
+  출처: https://opengameart.org/content/lpc-dcss-swords
+
 weapon/sword/longsword
   작가: Johannes Sjölund (wulax), bluecarrot16
   라이선스: OGA-BY 3.0, CC-BY-SA 3.0
   출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-extended-weapon-animations
+
+weapon/sword/rapier
+  작가: Johannes Sjölund (wulax), bluecarrot16
+  라이선스: OGA-BY 3.0, CC-BY-SA 3.0
+  출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-extended-weapon-animations
+
+weapon/sword/saber
+  작가: Daniel Eddeland (daneeklu), Johannes Sjölund (wulax), gr3yh47, bluecarrot16
+  라이선스: CC-BY-SA 3.0
+  출처: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites https://opengameart.org/content/lpc-extended-weapon-animations
+
+weapon/sword/scimitar
+  작가: Pierre Vigier and DCSS artists (see https://github.com/crawl/tiles/blob/master/ARTISTS.md)
+  라이선스: OGA-BY 3.0
+  출처: https://opengameart.org/content/lpc-dcss-swords
 
 
 ===== 이펙트 그림 (art/fx/)

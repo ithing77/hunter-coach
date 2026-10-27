@@ -1,0 +1,92 @@
+{
+ "idle": {
+  "size": 64,
+  "cols": 2,
+  "rows": 4,
+  "weapon": false
+ },
+ "walk": {
+  "size": 64,
+  "cols": 9,
+  "rows": 4,
+  "weapon": false
+ },
+ "run": {
+  "size": 64,
+  "cols": 8,
+  "rows": 4,
+  "weapon": false
+ },
+ "combat_idle": {
+  "size": 64,
+  "cols": 2,
+  "rows": 4,
+  "weapon": false
+ },
+ "jump": {
+  "size": 64,
+  "cols": 5,
+  "rows": 4,
+  "weapon": false
+ },
+ "sit": {
+  "size": 64,
+  "cols": 3,
+  "rows": 4,
+  "weapon": false
+ },
+ "emote": {
+  "size": 64,
+  "cols": 3,
+  "rows": 4,
+  "weapon": false
+ },
+ "climb": {
+  "size": 64,
+  "cols": 6,
+  "rows": 1,
+  "weapon": false
+ },
+ "hurt": {
+  "size": 64,
+  "cols": 6,
+  "rows": 1,
+  "weapon": false
+ },
+ "slash": {
+  "size": 64,
+  "cols": 6,
+  "rows": 4,
+  "weapon": true
+ },
+ "backslash": {
+  "size": 64,
+  "cols": 13,
+  "rows": 4,
+  "weapon": false
+ },
+ "halfslash": {
+  "size": 64,
+  "cols": 6,
+  "rows": 4,
+  "weapon": false
+ },
+ "thrust": {
+  "size": 64,
+  "cols": 8,
+  "rows": 4,
+  "weapon": false
+ },
+ "spellcast": {
+  "size": 64,
+  "cols": 7,
+  "rows": 4,
+  "weapon": false
+ },
+ "shoot": {
+  "size": 64,
+  "cols": 13,
+  "rows": 4,
+  "weapon": false
+ }
+}
