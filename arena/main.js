@@ -38,6 +38,7 @@ function start(toSetup) {
     G = newBattle('custom', $('style').value, +$('seed').value || 1, { h: layout.h, e: layout.e, styleE: $('styleE').value });
     if (setupMode) G.phase = 'setup';
   } else { setupMode = false; G = newBattle($('scn').value, $('style').value, +$('seed').value || 1); }
+  G.sfx = [];
   $('styleE').style.display = $('editBtn').style.display = isCustom() ? '' : 'none';
   sel = G.units.find(u => u.kind === 'cleric') || G.units.find(u => u.d.role) || G.units[0];
   acc = 0; logN = -1; $('endBanner').style.display = 'none';
@@ -173,6 +174,7 @@ function tick(now) {
   }
   if (G.phase !== 'play' && G.phase !== 'setup' && $('endBanner').style.display === 'none') showEnd();
   View.draw(G, sel);
+  Sound.drain(G);
   $('clock').textContent = `${G.t.toFixed(1)}초`;
   const ph = G.boards[sideOf(sel)].phase;
   $('phase').textContent = setupMode ? '배치 중' : PHASE_NAMES[ph];
@@ -244,6 +246,9 @@ $('diceBtn').onclick = () => { $('seed').value = Math.floor(Math.random() * 9000
 $('pauseBtn').onclick = () => setPaused(!paused);
 $('stepBtn').onclick = () => { setPaused(true); for (let i = 0; i < 3; i++) step(G, STEP); renderPanels(true); };
 for (const b of document.querySelectorAll('[data-speed]')) b.onclick = () => { speed = +b.dataset.speed; document.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('on', x === b)); };
+const soundUI = () => { $('soundBtn').textContent = Sound.on ? '🔊' : '🔇'; };
+soundUI();
+$('soundBtn').onclick = () => { Sound.set(!Sound.on); soundUI(); };
 $('partyBtn').onclick = () => { $('party').style.display = 'grid'; partyUI(); };
 $('batchBtn').onclick = () => { $('batch').style.display = 'grid'; batchUI([], ''); };
 $('logSel').onchange = () => renderLog(true);

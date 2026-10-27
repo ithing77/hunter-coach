@@ -214,6 +214,7 @@ function castTick(G, u, dt) {
 }
 function applySkill(G, u, k, t) {
   const s = SKILLS[k];
+  if (G.sfx) G.sfx.push(k);   // 화면이 있을 때만 (sound.js 가 튼다)
   if (k === 'taunt') {
     const es = liveFoes(G).filter(e => dist(e, u) <= s.radius);
     for (const e of es) { let mx = 0; for (const v of e.threat.values()) mx = Math.max(mx, v); e.threat.set(u.id, mx * 1.1 + 1); e.target = u; e.forcedT = s.force; e.why = '도발당함'; }

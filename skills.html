@@ -52,7 +52,7 @@
       <div class="row"><span class="lbl">속도</span>
         <button class="t sp" data-s="0.25">¼</button><button class="t sp" data-s="0.5">½</button><button class="t sp on" data-s="1">1배</button>
         <button class="t on" id="loop">반복</button><button class="t" id="again">↺ 다시</button>
-        <span class="lbl" style="margin-left:10px">보기</span><button class="t on" id="lines">표적 선</button>
+        <span class="lbl" style="margin-left:10px">보기</span><button class="t on" id="lines">표적 선</button><button class="t" id="snd">🔊 소리</button>
       </div>
       <div class="note">게임과 같은 코드(arena/sim.js)로 스킬을 한 번 써서 보여 줘요. 수치는 스킬 시트에서 온 값이에요. 허수아비 몬스터는 체력을 크게 해서 안 쓰러지게 했어요.<br>노란 막대 = 시전 시간 · 하얀/주황/빨간 고리 = 범위 · 숫자 = 피해(흰색)·회복(초록)</div>
     </div>
@@ -64,6 +64,7 @@
 <script src="arena/sim.js"></script>
 <script src="arena/ai.js"></script>
 <script src="arena/view.js"></script>
+<script src="arena/sound.js"></script>
 <script>
 // 스킬 작업실: 직업 탭 → 스킬 목록 → 고른 스킬을 작은 판에서 한 번 시전하고 되풀이한다.
 //   판은 전투장 규칙(sim.js)·그림(view.js)을 그대로 쓰고, 머리(ai.js)만 끄고 이 파일이 "지금 이 스킬 써"를 시킨다.
@@ -134,6 +135,7 @@ function scene() {
   else spots.forEach((p, i) => e.push({ kind: dummy[i], x: p[0], y: p[1] }));
   if (entry === 'taunt') mid.forEach(p => e.push({ kind: 'goblin', x: p[0], y: p[1] }));
   G = newBattle('custom', 'balance', 7, { h, e });
+  G.sfx = [];
   const caster = G.units[0];
   for (const u of G.units) { u.face = u.team === 'h' ? 3 : 1; if (u !== caster && u.team === 'e') { u.hp = u.max = 999; } }
   if (monster) for (const u of G.units) if (u !== caster) { u.hp = u.max = 999; }
@@ -187,12 +189,14 @@ function tick(dt) {
 }
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
-  if (G && View.ready) { let a = dt * speed; while (a > 0) { const h = Math.min(STEP, a); tick(h); a -= h; } View.draw(G, D.caster); }
+  if (G && View.ready) { let a = dt * speed; while (a > 0) { const h = Math.min(STEP, a); tick(h); a -= h; } View.draw(G, D.caster); Sound.drain(G); }
   requestAnimationFrame(frame);
 }
 for (const b of document.querySelectorAll('.sp')) b.onclick = () => { speed = +b.dataset.s; document.querySelectorAll('.sp').forEach(x => x.classList.toggle('on', x === b)); };
 $('loop').onclick = () => { loop = !loop; $('loop').classList.toggle('on', loop); if (loop && D.endAt !== null) scene(); };
 $('again').onclick = () => scene();
+const sndUI = () => $('snd').classList.toggle('on', Sound.on); sndUI();
+$('snd').onclick = () => { Sound.set(!Sound.on); sndUI(); };
 $('lines').onclick = () => { View.opt.lines = !View.opt.lines; $('lines').classList.toggle('on', View.opt.lines); };
 const q = new URLSearchParams(location.search).get('job');
 if (q && JOBS.includes(q)) job = q;

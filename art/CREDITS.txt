@@ -398,3 +398,6 @@ defense_up_blue.png — Super Pixel Fantasy FX Pack 3 (Free Version) "fanfx3_def
   Pixel Art Assets - Will Tice / unTied Games
   https://untiedgames.itch.io/super-pixel-fantasy-fx-pack-3
   라이선스: http://untiedgames.com/files/license.txt (게임에 넣어 배포 OK · 출처 표시 · 그림만 따로 재배포·AI 학습 금지)
+
+===== 소리 (art/sfx/)
+shling.mp3 — "shling" by pugger, https://freesound.org/people/pugger/sounds/63506/ (CC0)
